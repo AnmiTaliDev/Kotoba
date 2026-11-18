@@ -10,7 +10,7 @@ On-screen keyboard (input method) for Android.
 ## Dependencies
 
 - JDK 21
-- Android SDK with platform 36 and build-tools 36
+- Android SDK with platform 37 and build-tools 37
 - Android 12 (API 31) or newer on the target device
 
 ## Build
