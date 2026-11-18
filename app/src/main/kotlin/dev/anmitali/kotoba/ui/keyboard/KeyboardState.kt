@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
+import dev.anmitali.kotoba.emoji.EmojiCategory
 import dev.anmitali.kotoba.input.EnterAction
 import dev.anmitali.kotoba.input.ShiftState
 import dev.anmitali.kotoba.layout.KeyboardLayout
@@ -12,7 +13,11 @@ import dev.anmitali.kotoba.settings.KeyboardSettings
 
 class KeyPreviewTarget(val text: String, val bounds: Rect)
 
-class KeyboardState(val layouts: List<KeyboardLayout>) {
+class KeyboardState(
+    val layouts: List<KeyboardLayout>,
+    val emojiCategories: List<EmojiCategory>,
+) {
+    var emojiCategory by mutableIntStateOf(0)
     var layoutIndex by mutableIntStateOf(0)
     var layerId by mutableStateOf(layouts[0].defaultLayer)
     var shift by mutableStateOf(ShiftState.Off)

@@ -55,6 +55,7 @@ import dev.anmitali.kotoba.layout.EnterKey
 import dev.anmitali.kotoba.layout.Key
 import dev.anmitali.kotoba.layout.Layer
 import dev.anmitali.kotoba.layout.LayerKey
+import dev.anmitali.kotoba.layout.LayerKind
 import dev.anmitali.kotoba.layout.ShiftKey
 import dev.anmitali.kotoba.layout.SpaceKey
 import dev.anmitali.kotoba.layout.SpacerKey
@@ -106,6 +107,10 @@ fun KeyboardScreen(
                     label = "keyboardLayer",
                 ) { layerId ->
                     val layer = state.layout.layers.getValue(layerId)
+                    if (layer.kind == LayerKind.Emoji) {
+                        EmojiPanel(state, layer, actions, BodyHeight, keyCornerRadius)
+                        return@Crossfade
+                    }
                     val showNumberRow = state.settings.numberRow && layer.numberRow &&
                         state.layout.numberRow.isNotEmpty()
                     val rows = if (showNumberRow) listOf(state.layout.numberRow) + layer.rows else layer.rows

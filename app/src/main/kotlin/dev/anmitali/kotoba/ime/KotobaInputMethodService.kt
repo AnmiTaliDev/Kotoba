@@ -18,6 +18,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import dev.anmitali.kotoba.emoji.EmojiRepository
 import dev.anmitali.kotoba.input.EnterAction
 import dev.anmitali.kotoba.input.ShiftState
 import dev.anmitali.kotoba.input.allowsAutoCapitalize
@@ -66,7 +67,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performAttach()
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
-        state = KeyboardState(LayoutRepository(assets).loadAll())
+        state = KeyboardState(LayoutRepository(assets).loadAll(), EmojiRepository(assets).load())
         scope.launch {
             SettingsRepository(this@KotobaInputMethodService).settings.collect { state.settings = it }
         }
