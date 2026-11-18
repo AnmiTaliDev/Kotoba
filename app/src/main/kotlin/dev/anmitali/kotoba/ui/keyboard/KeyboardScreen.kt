@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -26,7 +27,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -76,7 +77,8 @@ private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
 private val BodyHeight = 216.dp
 private val ExtraRowHeight = 54.dp
-private val ToolbarHeight = 40.dp
+private val ToolbarHeight = 48.dp
+private val ToolbarButtonSize = 40.dp
 private val BodyPadding = PaddingValues(start = 4.dp, top = 4.dp, end = 4.dp, bottom = 6.dp)
 private val KeyGap = 4.dp
 private val RowGap = 6.dp
@@ -150,11 +152,14 @@ private fun Toolbar(open: Boolean, onToggle: () -> Unit) {
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onToggle) {
+        FilledTonalIconToggleButton(
+            checked = open,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.size(ToolbarButtonSize),
+        ) {
             Icon(
                 imageVector = if (open) Icons.Filled.Close else Icons.Filled.Build,
                 contentDescription = stringResource(if (open) R.string.tools_close else R.string.tools_open),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
