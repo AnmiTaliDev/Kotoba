@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.Density
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -23,6 +24,7 @@ import dev.anmitali.kotoba.input.spaceEdit
 import dev.anmitali.kotoba.input.tapShift
 import dev.anmitali.kotoba.layout.LayoutRepository
 import dev.anmitali.kotoba.ui.keyboard.KeyboardActions
+import dev.anmitali.kotoba.ui.keyboard.KeyboardPreviewArea
 import dev.anmitali.kotoba.ui.keyboard.KeyboardScreen
 import dev.anmitali.kotoba.ui.keyboard.KeyboardState
 import dev.anmitali.kotoba.ui.theme.KotobaTheme
@@ -61,6 +63,13 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     }
 
     override fun onEvaluateFullscreenMode(): Boolean = false
+
+    override fun onComputeInsets(outInsets: Insets) {
+        super.onComputeInsets(outInsets)
+        val previewArea = Density(this).run { KeyboardPreviewArea.roundToPx() }
+        outInsets.contentTopInsets += previewArea
+        outInsets.visibleTopInsets += previewArea
+    }
 
     override fun onCreateInputView(): View {
         val decor = window.window!!.decorView
@@ -130,12 +139,13 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
 
     private fun refreshShift() {
         val ic = currentInputConnection ?: return
-        val before = ic.getTextBeforeCursor(CONTEXT_CHARS, 0) ?: ""
+        val autoCapitalize = allowsAutoCapitalize(currentInputEditorInfo.inputType)
+        val before = if (autoCapitalize) ic.getTextBeforeCursor(CONTEXT_CHARS, 0) ?: "" else ""
         state.shift = shiftAfterEdit(
             current = state.shift,
             textBefore = before,
             sentenceEnd = state.layout.sentenceEnd,
-            autoCapitalize = allowsAutoCapitalize(currentInputEditorInfo.inputType),
+            autoCapitalize = autoCapitalize,
         )
     }
 }

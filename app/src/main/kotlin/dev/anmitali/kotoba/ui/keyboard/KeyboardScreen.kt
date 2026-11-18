@@ -3,6 +3,7 @@ package dev.anmitali.kotoba.ui.keyboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -19,9 +21,14 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -50,6 +57,9 @@ data class KeyboardActions(
     val onLayer: (String) -> Unit,
 )
 
+private val PreviewHeight = 60.dp
+private val PreviewGap = 8.dp
+val KeyboardPreviewArea = PreviewHeight + PreviewGap
 private val BodyHeight = 216.dp
 private val BodyPadding = PaddingValues(start = 4.dp, top = 4.dp, end = 4.dp, bottom = 6.dp)
 private val KeyGap = 4.dp
@@ -64,31 +74,63 @@ fun KeyboardScreen(
     keyCornerRadius: Dp = DefaultKeyCorner,
 ) {
     val layer = state.layout.layers.getValue(state.layerId)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .navigationBarsPadding(),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(BodyHeight)
-                .padding(BodyPadding),
-            verticalArrangement = Arrangement.spacedBy(RowGap),
-        ) {
-            for (row in layer.rows) {
-                Row(
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(KeyboardPreviewArea))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .navigationBarsPadding(),
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(KeyGap),
+                        .height(BodyHeight)
+                        .padding(BodyPadding),
+                    verticalArrangement = Arrangement.spacedBy(RowGap),
                 ) {
-                    for (key in row) {
-                        KeyCell(key, layer, state, actions, keyCornerRadius)
+                    for (row in layer.rows) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(KeyGap),
+                        ) {
+                            for (key in row) {
+                                KeyCell(key, layer, state, actions, keyCornerRadius)
+                            }
+                        }
                     }
                 }
             }
+        }
+        state.preview?.let { KeyPreview(it) }
+    }
+}
+
+@Composable
+private fun KeyPreview(target: KeyPreviewTarget) {
+    val gap = with(LocalDensity.current) { PreviewGap.roundToPx() }
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shape = MaterialTheme.shapes.large,
+        shadowElevation = 3.dp,
+        modifier = Modifier
+            .sizeIn(minWidth = 42.dp, minHeight = PreviewHeight)
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+                layout(0, 0) {
+                    val x = (target.bounds.center.x - placeable.width / 2f).roundToInt()
+                        .coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
+                    val y = (target.bounds.top - placeable.height - gap).roundToInt()
+                    placeable.place(x, y)
+                }
+            },
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp)) {
+            Text(text = target.text, style = MaterialTheme.typography.headlineLarge)
         }
     }
 }
@@ -114,6 +156,8 @@ private fun RowScope.KeyCell(
                 cornerRadius = cornerRadius,
                 onTap = { actions.onChar(text) },
                 previewText = text,
+                onPreviewShow = { state.preview = it },
+                onPreviewHide = { if (state.preview === it) state.preview = null },
             ) {
                 Text(text = text, style = MaterialTheme.typography.titleLarge)
             }
