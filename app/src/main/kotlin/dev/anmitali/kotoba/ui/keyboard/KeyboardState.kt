@@ -17,6 +17,7 @@ class KeyboardState(val layouts: List<KeyboardLayout>) {
     var shift by mutableStateOf(ShiftState.Off)
     var enterAction by mutableStateOf(EnterAction.Newline)
     var preview by mutableStateOf<KeyPreviewTarget?>(null)
+    var navigationBarHeightPx by mutableIntStateOf(0)
     var lastShiftTapAt = 0L
 
     val layout: KeyboardLayout get() = layouts[layoutIndex]

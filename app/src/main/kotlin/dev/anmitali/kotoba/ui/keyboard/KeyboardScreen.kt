@@ -1,5 +1,10 @@
 package dev.anmitali.kotoba.ui.keyboard
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +16,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
@@ -24,8 +28,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.roundToInt
@@ -57,6 +65,7 @@ data class KeyboardActions(
     val onLayer: (String) -> Unit,
 )
 
+private const val LayerFadeMs = 150
 private val PreviewHeight = 60.dp
 private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
@@ -73,7 +82,7 @@ fun KeyboardScreen(
     modifier: Modifier = Modifier,
     keyCornerRadius: Dp = DefaultKeyCorner,
 ) {
-    val layer = state.layout.layers.getValue(state.layerId)
+    val navigationBarHeight = with(LocalDensity.current) { state.navigationBarHeightPx.toDp() }
     Box(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(Modifier.height(KeyboardPreviewArea))
@@ -81,24 +90,31 @@ fun KeyboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .navigationBarsPadding(),
+                    .padding(bottom = navigationBarHeight),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(BodyHeight)
-                        .padding(BodyPadding),
-                    verticalArrangement = Arrangement.spacedBy(RowGap),
-                ) {
-                    for (row in layer.rows) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(KeyGap),
-                        ) {
-                            for (key in row) {
-                                KeyCell(key, layer, state, actions, keyCornerRadius)
+                Crossfade(
+                    targetState = state.layerId,
+                    animationSpec = tween(durationMillis = LayerFadeMs),
+                    label = "keyboardLayer",
+                ) { layerId ->
+                    val layer = state.layout.layers.getValue(layerId)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(BodyHeight)
+                            .padding(BodyPadding),
+                        verticalArrangement = Arrangement.spacedBy(RowGap),
+                    ) {
+                        for (row in layer.rows) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(KeyGap),
+                            ) {
+                                for (key in row) {
+                                    KeyCell(key, layer, state, actions, keyCornerRadius)
+                                }
                             }
                         }
                     }
@@ -112,6 +128,11 @@ fun KeyboardScreen(
 @Composable
 private fun KeyPreview(target: KeyPreviewTarget) {
     val gap = with(LocalDensity.current) { PreviewGap.roundToPx() }
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(target) {
+        appear.snapTo(0f)
+        appear.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessHigh))
+    }
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -119,6 +140,13 @@ private fun KeyPreview(target: KeyPreviewTarget) {
         shadowElevation = 3.dp,
         modifier = Modifier
             .sizeIn(minWidth = 42.dp, minHeight = PreviewHeight)
+            .graphicsLayer {
+                val progress = appear.value
+                alpha = progress.coerceIn(0f, 1f)
+                scaleX = 0.8f + 0.2f * progress
+                scaleY = 0.8f + 0.2f * progress
+                transformOrigin = TransformOrigin(0.5f, 1f)
+            }
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
                 layout(0, 0) {
