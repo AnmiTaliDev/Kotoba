@@ -1,6 +1,7 @@
 package dev.anmitali.kotoba.layout
 
 import java.util.Locale
+import org.json.JSONArray
 import org.json.JSONObject
 
 object LayoutParser {
@@ -32,17 +33,24 @@ object LayoutParser {
             defaultLayer = defaultLayer,
             sentenceEnd = punctuation.getString("sentenceEnd"),
             doubleSpace = punctuation.getString("doubleSpace"),
+            numberRow = parseRow(root.optJSONArray("numberRow"), locale),
             layers = layers,
         )
     }
 
     private fun parseLayer(json: JSONObject, locale: Locale): Layer {
         val rowsJson = json.getJSONArray("rows")
-        val rows = List(rowsJson.length()) { r ->
-            val rowJson = rowsJson.getJSONArray(r)
-            List(rowJson.length()) { k -> parseKey(rowJson.get(k), locale) }
-        }
-        return Layer(shiftable = json.getBoolean("shiftable"), rows = rows)
+        val rows = List(rowsJson.length()) { r -> parseRow(rowsJson.getJSONArray(r), locale) }
+        return Layer(
+            shiftable = json.getBoolean("shiftable"),
+            numberRow = json.optBoolean("numberRow", false),
+            rows = rows,
+        )
+    }
+
+    private fun parseRow(json: JSONArray?, locale: Locale): List<Key> {
+        if (json == null) return emptyList()
+        return List(json.length()) { k -> parseKey(json.get(k), locale) }
     }
 
     private fun parseKey(raw: Any, locale: Locale): Key {

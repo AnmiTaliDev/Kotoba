@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Rect
 import dev.anmitali.kotoba.input.EnterAction
 import dev.anmitali.kotoba.input.ShiftState
 import dev.anmitali.kotoba.layout.KeyboardLayout
+import dev.anmitali.kotoba.settings.KeyboardSettings
 
 class KeyPreviewTarget(val text: String, val bounds: Rect)
 
@@ -16,6 +17,8 @@ class KeyboardState(val layouts: List<KeyboardLayout>) {
     var layerId by mutableStateOf(layouts[0].defaultLayer)
     var shift by mutableStateOf(ShiftState.Off)
     var enterAction by mutableStateOf(EnterAction.Newline)
+    var settings by mutableStateOf(KeyboardSettings())
+    var toolsOpen by mutableStateOf(false)
     var preview by mutableStateOf<KeyPreviewTarget?>(null)
     var navigationBarHeightPx by mutableIntStateOf(0)
     var lastShiftTapAt = 0L

@@ -7,11 +7,13 @@ data class KeyboardLayout(
     val defaultLayer: String,
     val sentenceEnd: String,
     val doubleSpace: String,
+    val numberRow: List<Key>,
     val layers: Map<String, Layer>,
 )
 
 data class Layer(
     val shiftable: Boolean,
+    val numberRow: Boolean,
     val rows: List<List<Key>>,
 )
 
