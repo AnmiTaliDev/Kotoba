@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Kotoba</string>
+    <string name="key_shift">Shift</string>
+    <string name="key_caps_lock">Caps Lock on</string>
+    <string name="key_delete">Delete</string>
+    <string name="key_space">Space</string>
+    <string name="key_enter">Enter</string>
+    <string name="key_go">Go</string>
+    <string name="key_search">Search</string>
+    <string name="key_send">Send</string>
+    <string name="key_next">Next</string>
+    <string name="key_done">Done</string>
 </resources>
