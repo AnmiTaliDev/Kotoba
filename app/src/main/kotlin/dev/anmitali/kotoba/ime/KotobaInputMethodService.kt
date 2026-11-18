@@ -1,9 +1,11 @@
 package dev.anmitali.kotoba.ime
 
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.Density
@@ -75,6 +77,10 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         val decor = window.window!!.decorView
         decor.setViewTreeLifecycleOwner(this)
         decor.setViewTreeSavedStateRegistryOwner(this)
+        decor.setOnApplyWindowInsetsListener { view, insets ->
+            state.navigationBarHeightPx = navigationBarHeight(insets)
+            view.onApplyWindowInsets(insets)
+        }
         return ComposeView(this).apply {
             setContent {
                 KotobaTheme {
@@ -91,7 +97,15 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
             state.shift = ShiftState.Off
         }
         state.enterAction = enterActionOf(info.imeOptions)
+        state.navigationBarHeightPx = navigationBarHeight(window.window?.decorView?.rootWindowInsets)
         refreshShift()
+    }
+
+    private fun navigationBarHeight(insets: WindowInsets?): Int {
+        val fromInsets = insets?.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars())?.bottom ?: 0
+        if (fromInsets > 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return fromInsets
+        val id = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        return if (id > 0) resources.getDimensionPixelSize(id) else 0
     }
 
     private fun commit(text: String) {
