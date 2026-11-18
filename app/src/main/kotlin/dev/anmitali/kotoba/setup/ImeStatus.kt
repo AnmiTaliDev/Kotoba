@@ -1,4 +1,4 @@
-package dev.anmitali.kotoba.settings
+package dev.anmitali.kotoba.setup
 
 import android.content.Context
 import android.provider.Settings

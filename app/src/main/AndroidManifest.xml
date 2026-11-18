@@ -7,7 +7,7 @@
         android:label="@string/app_name">
 
         <activity
-            android:name=".settings.SettingsActivity"
+            android:name=".setup.SetupActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.DeviceDefault.DayNight">
@@ -16,6 +16,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.DeviceDefault.DayNight" />
 
         <service
             android:name=".ime.KotobaInputMethodService"
