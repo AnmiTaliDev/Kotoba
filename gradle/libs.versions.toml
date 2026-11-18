@@ -1,6 +1,11 @@
 [versions]
 agp = "9.5.1"
 kotlin = "2.4.21"
+composeBom = "2026.09.00"
+
+[libraries]
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

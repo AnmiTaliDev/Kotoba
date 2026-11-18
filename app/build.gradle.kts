@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "dev.anmitali.kotoba"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "dev.anmitali.kotoba"
@@ -20,4 +20,9 @@ android {
             isMinifyEnabled = false
         }
     }
+}
+
+dependencies {
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
 }
