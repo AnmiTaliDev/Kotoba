@@ -3,7 +3,6 @@ package dev.anmitali.kotoba.ime
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
@@ -33,7 +32,6 @@ import dev.anmitali.kotoba.ui.keyboard.KeyboardState
 import dev.anmitali.kotoba.ui.theme.KotobaTheme
 
 private const val CONTEXT_CHARS = 16
-private const val TAG = "Kotoba"
 
 class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner {
 
@@ -103,21 +101,12 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     private fun updateNavigationBarHeight() {
         val insets = window.window?.decorView?.rootWindowInsets
         val fromInsets = insets?.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars())?.bottom ?: 0
-        val barHeight = systemDimension("navigation_bar_height")
-        val frameHeight = systemDimension("navigation_bar_frame_height")
         val height = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             fromInsets
         } else {
-            maxOf(fromInsets, frameHeight)
+            maxOf(fromInsets, systemDimension("navigation_bar_frame_height"))
         }
-        if (state.navigationBarHeightPx != height) {
-            Log.d(
-                TAG,
-                "navigationBar sdk=${Build.VERSION.SDK_INT} insets=$fromInsets bar=$barHeight " +
-                    "frame=$frameHeight applied=$height density=${resources.displayMetrics.density}",
-            )
-            state.navigationBarHeightPx = height
-        }
+        if (state.navigationBarHeightPx != height) state.navigationBarHeightPx = height
     }
 
     private fun systemDimension(name: String): Int {
