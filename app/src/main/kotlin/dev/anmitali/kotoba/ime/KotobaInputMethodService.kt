@@ -1,5 +1,6 @@
 package dev.anmitali.kotoba.ime
 
+import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.os.SystemClock
@@ -25,11 +26,18 @@ import dev.anmitali.kotoba.input.shiftAfterEdit
 import dev.anmitali.kotoba.input.spaceEdit
 import dev.anmitali.kotoba.input.tapShift
 import dev.anmitali.kotoba.layout.LayoutRepository
+import dev.anmitali.kotoba.settings.SettingsActivity
+import dev.anmitali.kotoba.settings.SettingsRepository
 import dev.anmitali.kotoba.ui.keyboard.KeyboardActions
 import dev.anmitali.kotoba.ui.keyboard.KeyboardPreviewArea
 import dev.anmitali.kotoba.ui.keyboard.KeyboardScreen
 import dev.anmitali.kotoba.ui.keyboard.KeyboardState
 import dev.anmitali.kotoba.ui.theme.KotobaTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 private const val CONTEXT_CHARS = 16
 
@@ -37,6 +45,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateController = SavedStateRegistryController.create(this)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var state: KeyboardState
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
@@ -49,6 +58,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         onEnter = ::enter,
         onSpace = ::space,
         onLayer = { state.layerId = it },
+        onOpenSettings = ::openSettings,
     )
 
     override fun onCreate() {
@@ -57,9 +67,13 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         state = KeyboardState(LayoutRepository(assets).loadAll())
+        scope.launch {
+            SettingsRepository(this@KotobaInputMethodService).settings.collect { state.settings = it }
+        }
     }
 
     override fun onDestroy() {
+        scope.cancel()
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
         super.onDestroy()
     }
@@ -92,6 +106,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         if (!restarting) {
             state.layerId = state.layout.defaultLayer
             state.shift = ShiftState.Off
+            state.toolsOpen = false
         }
         state.enterAction = enterActionOf(info.imeOptions)
         updateNavigationBarHeight()
@@ -112,6 +127,12 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     private fun systemDimension(name: String): Int {
         val id = resources.getIdentifier(name, "dimen", "android")
         return if (id > 0) resources.getDimensionPixelSize(id) else 0
+    }
+
+    private fun openSettings() {
+        state.toolsOpen = false
+        val intent = Intent(this, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
     }
 
     private fun commit(text: String) {

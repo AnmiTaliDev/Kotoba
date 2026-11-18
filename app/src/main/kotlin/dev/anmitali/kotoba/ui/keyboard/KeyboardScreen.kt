@@ -21,9 +21,12 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,6 +66,7 @@ data class KeyboardActions(
     val onEnter: () -> Unit,
     val onSpace: () -> Unit,
     val onLayer: (String) -> Unit,
+    val onOpenSettings: () -> Unit,
 )
 
 private const val LayerFadeMs = 150
@@ -70,18 +74,19 @@ private val PreviewHeight = 60.dp
 private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
 private val BodyHeight = 216.dp
+private val ExtraRowHeight = 54.dp
+private val ToolbarHeight = 40.dp
 private val BodyPadding = PaddingValues(start = 4.dp, top = 4.dp, end = 4.dp, bottom = 6.dp)
 private val KeyGap = 4.dp
 private val RowGap = 6.dp
-private val DefaultKeyCorner = 14.dp
 
 @Composable
 fun KeyboardScreen(
     state: KeyboardState,
     actions: KeyboardActions,
     modifier: Modifier = Modifier,
-    keyCornerRadius: Dp = DefaultKeyCorner,
 ) {
+    val keyCornerRadius = state.settings.keyCornerRadiusDp.dp
     val navigationBarHeight = with(LocalDensity.current) { state.navigationBarHeightPx.toDp() }
     Box(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -92,20 +97,26 @@ fun KeyboardScreen(
                     .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(bottom = navigationBarHeight),
             ) {
-                Crossfade(
+                Toolbar(open = state.toolsOpen, onToggle = { state.toolsOpen = !state.toolsOpen })
+                if (state.toolsOpen) {
+                    ToolsPanel(actions = actions, height = BodyHeight)
+                } else Crossfade(
                     targetState = state.layerId,
                     animationSpec = tween(durationMillis = LayerFadeMs),
                     label = "keyboardLayer",
                 ) { layerId ->
                     val layer = state.layout.layers.getValue(layerId)
+                    val showNumberRow = state.settings.numberRow && layer.numberRow &&
+                        state.layout.numberRow.isNotEmpty()
+                    val rows = if (showNumberRow) listOf(state.layout.numberRow) + layer.rows else layer.rows
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(BodyHeight)
+                            .height(if (showNumberRow) BodyHeight + ExtraRowHeight else BodyHeight)
                             .padding(BodyPadding),
                         verticalArrangement = Arrangement.spacedBy(RowGap),
                     ) {
-                        for (row in layer.rows) {
+                        for (row in rows) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -122,6 +133,25 @@ fun KeyboardScreen(
             }
         }
         state.preview?.let { KeyPreview(it) }
+    }
+}
+
+@Composable
+private fun Toolbar(open: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(ToolbarHeight)
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onToggle) {
+            Icon(
+                imageVector = if (open) Icons.Filled.Close else Icons.Filled.Build,
+                contentDescription = stringResource(if (open) R.string.tools_close else R.string.tools_open),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
