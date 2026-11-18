@@ -103,17 +103,26 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     private fun updateNavigationBarHeight() {
         val insets = window.window?.decorView?.rootWindowInsets
         val fromInsets = insets?.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars())?.bottom ?: 0
-        val id = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-        val fromResource = if (id > 0) resources.getDimensionPixelSize(id) else 0
-        val height = if (fromInsets > 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+        val barHeight = systemDimension("navigation_bar_height")
+        val frameHeight = systemDimension("navigation_bar_frame_height")
+        val height = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             fromInsets
         } else {
-            fromResource
+            maxOf(fromInsets, frameHeight)
         }
         if (state.navigationBarHeightPx != height) {
-            Log.d(TAG, "navigationBar sdk=${Build.VERSION.SDK_INT} insets=$fromInsets resource=$fromResource applied=$height")
+            Log.d(
+                TAG,
+                "navigationBar sdk=${Build.VERSION.SDK_INT} insets=$fromInsets bar=$barHeight " +
+                    "frame=$frameHeight applied=$height density=${resources.displayMetrics.density}",
+            )
             state.navigationBarHeightPx = height
         }
+    }
+
+    private fun systemDimension(name: String): Int {
+        val id = resources.getIdentifier(name, "dimen", "android")
+        return if (id > 0) resources.getDimensionPixelSize(id) else 0
     }
 
     private fun commit(text: String) {
