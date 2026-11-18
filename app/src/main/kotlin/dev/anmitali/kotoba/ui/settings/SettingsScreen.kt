@@ -14,8 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -44,7 +45,7 @@ private val GroupInnerCorner = 4.dp
 private val GroupItemGap = 2.dp
 private val RadiusPreviewSize = 40.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(repository: SettingsRepository) {
     val scope = rememberCoroutineScope()
@@ -56,7 +57,7 @@ fun SettingsScreen(repository: SettingsRepository) {
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
+            LargeFlexibleTopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
                 scrollBehavior = scrollBehavior,
             )
