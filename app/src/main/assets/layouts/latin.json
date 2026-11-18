@@ -25,13 +25,19 @@
           {"type": "delete", "weight": 1.5}
         ],
         [
-          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.4},
+          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.3},
           ",",
-          {"type": "space", "weight": 5},
+          {"type": "layer", "label": "😊", "layer": "emoji"},
+          {"type": "space", "weight": 4.2},
           ".",
-          {"type": "enter", "weight": 1.5}
+          {"type": "enter", "weight": 1.4}
         ]
       ]
+    },
+    "emoji": {
+      "kind": "emoji",
+      "shiftable": false,
+      "back": {"label": "ABC", "layer": "letters"}
     },
     "symbols": {
       "shiftable": false,

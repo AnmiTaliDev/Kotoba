@@ -18,6 +18,7 @@ object LayoutParser {
         val defaultLayer = root.getString("defaultLayer")
         require(defaultLayer in layers) { "Unknown default layer: $defaultLayer" }
         for (layer in layers.values) {
+            layer.back?.let { require(it.target in layers) { "Unknown layer target: ${it.target}" } }
             for (row in layer.rows) {
                 for (key in row) {
                     if (key is LayerKey) {
@@ -39,9 +40,22 @@ object LayoutParser {
     }
 
     private fun parseLayer(json: JSONObject, locale: Locale): Layer {
-        val rowsJson = json.getJSONArray("rows")
-        val rows = List(rowsJson.length()) { r -> parseRow(rowsJson.getJSONArray(r), locale) }
+        val rowsJson = json.optJSONArray("rows")
+        val rows = if (rowsJson == null) {
+            emptyList()
+        } else {
+            List(rowsJson.length()) { r -> parseRow(rowsJson.getJSONArray(r), locale) }
+        }
+        val kind = when (val name = json.optString("kind", "keys")) {
+            "keys" -> LayerKind.Keys
+            "emoji" -> LayerKind.Emoji
+            else -> error("Unknown layer kind: $name")
+        }
+        val back = json.optJSONObject("back")?.let { LayerKey(it.getString("label"), it.getString("layer"), 1f) }
+        require(kind != LayerKind.Emoji || back != null) { "Emoji layer requires back" }
         return Layer(
+            kind = kind,
+            back = back,
             shiftable = json.getBoolean("shiftable"),
             numberRow = json.optBoolean("numberRow", false),
             rows = rows,

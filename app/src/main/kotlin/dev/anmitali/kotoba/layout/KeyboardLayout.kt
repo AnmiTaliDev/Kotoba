@@ -11,10 +11,14 @@ data class KeyboardLayout(
     val layers: Map<String, Layer>,
 )
 
+enum class LayerKind { Keys, Emoji }
+
 data class Layer(
+    val kind: LayerKind,
     val shiftable: Boolean,
     val numberRow: Boolean,
     val rows: List<List<Key>>,
+    val back: LayerKey?,
 )
 
 sealed interface Key {
