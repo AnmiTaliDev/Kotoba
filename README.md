@@ -7,6 +7,21 @@
 
 On-screen keyboard (input method) for Android.
 
+## Screenshots
+
+<p>
+  <img src="screenshots/setup-enable.png" width="190" alt="setup-enable">
+  <img src="screenshots/setup-select.png" width="190" alt="setup-select">
+  <img src="screenshots/setup-ready.png" width="190" alt="setup-ready">
+  <img src="screenshots/settings.png" width="190" alt="settings">
+</p>
+<p>
+  <img src="screenshots/keyboard-letters.png" width="190" alt="keyboard-letters">
+  <img src="screenshots/keyboard-symbols.png" width="190" alt="keyboard-symbols">
+  <img src="screenshots/keyboard-emoji.png" width="190" alt="keyboard-emoji">
+  <img src="screenshots/keyboard-tools.png" width="190" alt="keyboard-tools">
+</p>
+
 ## Dependencies
 
 - JDK 21
