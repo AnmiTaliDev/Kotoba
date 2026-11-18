@@ -11,9 +11,14 @@ fun tapShift(current: ShiftState, sincePreviousTapMs: Long): ShiftState = when {
     else -> ShiftState.Off
 }
 
-fun shiftAfterEdit(current: ShiftState, textBefore: CharSequence, sentenceEnd: String): ShiftState = when {
+fun shiftAfterEdit(
+    current: ShiftState,
+    textBefore: CharSequence,
+    sentenceEnd: String,
+    autoCapitalize: Boolean,
+): ShiftState = when {
     current == ShiftState.Caps -> ShiftState.Caps
-    startsSentence(textBefore, sentenceEnd) -> ShiftState.Once
+    autoCapitalize && startsSentence(textBefore, sentenceEnd) -> ShiftState.Once
     else -> ShiftState.Off
 }
 
