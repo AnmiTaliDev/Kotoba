@@ -1,6 +1,13 @@
 {
  "categories": [
   {
+   "id": "recent",
+   "name": "Recent",
+   "icon": "🕘",
+   "recent": true,
+   "emoji": []
+  },
+  {
    "id": "smileys",
    "name": "Smileys",
    "icon": "😀",

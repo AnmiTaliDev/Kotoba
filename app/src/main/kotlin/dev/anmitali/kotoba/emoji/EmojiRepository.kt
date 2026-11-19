@@ -16,6 +16,7 @@ class EmojiRepository(private val assets: AssetManager) {
                 name = json.getString("name"),
                 icon = json.getString("icon"),
                 emoji = List(emoji.length()) { emoji.getString(it) },
+                recent = json.optBoolean("recent", false),
             )
         }
     }

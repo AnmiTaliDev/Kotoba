@@ -5,4 +5,5 @@ data class EmojiCategory(
     val name: String,
     val icon: String,
     val emoji: List<String>,
+    val recent: Boolean,
 )
