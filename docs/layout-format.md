@@ -4,6 +4,16 @@ A layout is a single JSON file. The current format version is `1`.
 
 A machine-readable description is in [layout.schema.json](layout.schema.json).
 
+## Installing a layout
+
+1. Put the `.json` file on the device.
+2. Open Kotoba, then Settings, then Keyboard layouts, then Import layout, and pick the file.
+3. If the file is valid it appears under Imported. If not, the list of problems is shown and nothing is installed.
+4. Press Enable layouts and switch the new layout on in the system keyboard settings.
+5. Switch layouts with the globe button of the system navigation bar.
+
+Importing a file whose `id` matches an already imported layout replaces it. An `id` of a built-in layout is refused. Imported layouts can be exported and deleted from the same screen. Built-in layouts can be exported and used as a starting point.
+
 ## Minimal example
 
 ```json
@@ -78,7 +88,7 @@ An object has a `type` and an optional `weight`. Weight is the relative width, d
 
 | `type` | Extra fields | Description |
 |--------|--------------|-------------|
-| `char` (default) | `label`, optional `shifted` | Types `label`. With shift active types `shifted`, or the upper case of `label` when omitted. |
+| `char` (default) | `label`, optional `shifted`, `hold`, `holdShifted` | Types `label`. With shift active types `shifted`, or the upper case of `label` when omitted. See [Long press](#long-press). |
 | `shift` | | Shift and caps lock. |
 | `delete` | | Backspace. Repeats while held. |
 | `enter` | | Enter or the editor action. |
@@ -87,6 +97,25 @@ An object has a `type` and an optional `weight`. Weight is the relative width, d
 | `layer` | `label`, `layer`, optional `icon` | Switches to layer `layer`. `label` is shown, or used as the description when an icon is present. `icon` names a built-in icon and falls back to the label if unknown. |
 
 Use `shifted` when the upper case differs from the language default, for example `{ "label": "ß", "shifted": "ẞ" }`.
+
+## Long press
+
+A `char` key can offer alternative characters that appear in a popup when the key is held.
+
+```json
+{ "label": "e", "hold": ["é", "è", "ê", "ë"] }
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `hold` | array of strings | Alternatives in display order, at most 12, each 1 to 8 characters. |
+| `holdShifted` | array of strings | Alternatives used while shift is active. Same number of items as `hold`. When omitted, each item of `hold` is converted to upper case using `locale`. |
+
+Behavior:
+
+- a key with `hold` types its character when released, not when pressed, because the press may turn into a long press. Keys without `hold` type on press;
+- holding the key shows the popup with the first alternative selected, sliding the finger selects another one, releasing types it;
+- sliding out of the key before the long press time cancels the key.
 
 ## Inheritance
 
@@ -112,6 +141,7 @@ Errors:
 - unknown key `type`, unknown layer kind, `layer` or `defaultLayer` pointing to a missing layer;
 - empty row, `keys` layer without rows, `emoji` layer without `back`;
 - label longer than 8 characters, weight not greater than 0 or above 10;
+- `hold` with more than 12 items, an empty or non-string item, or `holdShifted` of a different size;
 - more than 200 keys in total;
 - default layer without a `space` key.
 
