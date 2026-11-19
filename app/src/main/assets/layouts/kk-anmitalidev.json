@@ -1,6 +1,6 @@
 {
-  "id": "kk-anmitalidev-1a",
-  "name": "Казахский AnmiTaliDev1a",
+  "id": "kk-anmitalidev",
+  "name": "Казахский AnmiTaliDevа",
   "locale": "kk",
   "order": 42,
   "extends": "latin",
