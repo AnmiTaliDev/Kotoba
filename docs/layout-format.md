@@ -4,6 +4,14 @@ A layout is a single JSON file. The current format version is `1`.
 
 A machine-readable description is in [layout.schema.json](layout.schema.json).
 
+## Checking a layout
+
+The engine ships a command line checker that applies the same rules as the app:
+
+```
+cargo run --manifest-path engine/Cargo.toml -p kotoba-cli -- validate my-layout.json
+```
+
 ## Installing a layout
 
 1. Put the `.json` file on the device.

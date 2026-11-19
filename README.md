@@ -31,7 +31,8 @@ On-screen keyboard (input method) for Android.
 ## Dependencies
 
 - JDK 21
-- Android SDK with platform 37 and build-tools 37
+- Android SDK with platform 37, build-tools 37 and NDK 28.2.13676358
+- Rust (stable, 1.85 or newer) with the Android targets `aarch64-linux-android`, `armv7-linux-androideabi` and `x86_64-linux-android`, and [cargo-ndk](https://github.com/bbqsrc/cargo-ndk)
 - Android 12 (API 31) or newer on the target device
 
 ## Build
@@ -53,6 +54,17 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Install it wi
 ```
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
+
+## Tests
+
+```
+cargo test --manifest-path engine/Cargo.toml
+./gradlew testDebugUnitTest
+```
+
+## Engine
+
+The keyboard logic (layout format, input rules, emoji, session) is a separate Rust workspace in [`engine/`](engine/README.md).
 
 ## Releases
 
