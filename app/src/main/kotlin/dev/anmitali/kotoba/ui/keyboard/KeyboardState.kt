@@ -13,10 +13,20 @@ import dev.anmitali.kotoba.settings.KeyboardSettings
 
 class KeyPreviewTarget(val text: String, val bounds: Rect)
 
+data class AlternatesPopup(
+    val bounds: Rect,
+    val items: List<String>,
+    val left: Float,
+    val cellWidthPx: Float,
+    val selected: Int,
+)
+
 class KeyboardState(
-    val layouts: List<KeyboardLayout>,
+    layouts: List<KeyboardLayout>,
     val emojiCategories: List<EmojiCategory>,
 ) {
+    var layouts by mutableStateOf(layouts)
+        private set
     var emojiCategory by mutableIntStateOf(0)
     var recentEmoji by mutableStateOf<List<String>>(emptyList())
     var layoutIndex by mutableIntStateOf(0)
@@ -26,10 +36,18 @@ class KeyboardState(
     var settings by mutableStateOf(KeyboardSettings())
     var toolsOpen by mutableStateOf(false)
     var preview by mutableStateOf<KeyPreviewTarget?>(null)
+    var alternates by mutableStateOf<AlternatesPopup?>(null)
     var navigationBarHeightPx by mutableIntStateOf(0)
     var lastShiftTapAt = 0L
 
     val layout: KeyboardLayout get() = layouts[layoutIndex]
+
+    fun replaceLayouts(newLayouts: List<KeyboardLayout>) {
+        val currentId = layout.id
+        layouts = newLayouts
+        layoutIndex = newLayouts.indexOfFirst { it.id == currentId }.coerceAtLeast(0)
+        if (layerId !in layout.layers) layerId = layout.defaultLayer
+    }
 
     fun selectLayout(id: String) {
         val index = layouts.indexOfFirst { it.id == id }

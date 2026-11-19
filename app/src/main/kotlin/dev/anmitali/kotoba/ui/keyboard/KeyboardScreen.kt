@@ -26,8 +26,8 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
 import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,21 +37,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
-import kotlin.math.roundToInt
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.anmitali.kotoba.R
 import dev.anmitali.kotoba.input.EnterAction
 import dev.anmitali.kotoba.input.ShiftState
+import dev.anmitali.kotoba.input.alternativesOf
 import dev.anmitali.kotoba.input.outputOf
 import dev.anmitali.kotoba.layout.CharKey
 import dev.anmitali.kotoba.layout.DeleteKey
@@ -63,6 +63,7 @@ import dev.anmitali.kotoba.layout.LayerKind
 import dev.anmitali.kotoba.layout.ShiftKey
 import dev.anmitali.kotoba.layout.SpaceKey
 import dev.anmitali.kotoba.layout.SpacerKey
+import kotlin.math.roundToInt
 
 data class KeyboardActions(
     val onChar: (String) -> Unit,
@@ -80,6 +81,7 @@ private val PreviewHeight = 60.dp
 private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
 private val KeyRowHeight = 47.dp
+private val AlternativeCellHeight = 52.dp
 private const val DefaultBodyRows = 4
 private val ToolbarHeight = 48.dp
 private val ToolbarButtonSize = 40.dp
@@ -149,6 +151,7 @@ fun KeyboardScreen(
                 }
             }
             state.preview?.let { KeyPreview(it) }
+            state.alternates?.let { AlternativesPopup(it) }
         }
     }
 }
@@ -171,6 +174,46 @@ private fun Toolbar(open: Boolean, onToggle: () -> Unit) {
                 imageVector = if (open) Icons.Filled.Close else Icons.Filled.Build,
                 contentDescription = stringResource(if (open) R.string.tools_close else R.string.tools_open),
             )
+        }
+    }
+}
+
+@Composable
+private fun AlternativesPopup(popup: AlternatesPopup) {
+    val density = LocalDensity.current
+    val gap = with(density) { PreviewGap.roundToPx() }
+    val cellWidth = with(density) { popup.cellWidthPx.toDp() }
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shape = MaterialTheme.shapes.large,
+        shadowElevation = 3.dp,
+        modifier = Modifier.layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+            layout(0, 0) {
+                placeable.place(popup.left.roundToInt(), (popup.bounds.top - placeable.height - gap).roundToInt())
+            }
+        },
+    ) {
+        Row(modifier = Modifier.padding(4.dp)) {
+            popup.items.forEachIndexed { index, item ->
+                val selected = index == popup.selected
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(width = cellWidth, height = AlternativeCellHeight)
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            MaterialTheme.shapes.medium,
+                        ),
+                ) {
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
         }
     }
 }
@@ -234,6 +277,9 @@ private fun RowScope.KeyCell(
                 cornerRadius = cornerRadius,
                 onTap = { actions.onChar(text) },
                 previewText = text,
+                alternatives = alternativesOf(key, layer, state.shift),
+                onAlternativesChange = { state.alternates = it },
+                onAlternative = actions.onChar,
                 onPreviewShow = { state.preview = it },
                 onPreviewHide = { if (state.preview === it) state.preview = null },
             ) {

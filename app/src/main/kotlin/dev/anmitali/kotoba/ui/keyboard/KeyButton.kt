@@ -31,27 +31,75 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.floor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 private const val REPEAT_DELAY_MS = 420L
 private const val REPEAT_INTERVAL_MS = 55L
 private const val PressedScale = 0.94f
 private const val ColorDurationMs = 150
 private val PressedCorner = 28.dp
+val AlternativeCellWidth = 44.dp
+
+private enum class HoldOutcome { Tap, Cancelled }
+
+private suspend fun AwaitPointerEventScope.chooseAlternative(
+    pointerId: PointerId,
+    bounds: Rect,
+    items: List<String>,
+    cellWidth: Float,
+    rootWidth: Float,
+    onChange: (AlternatesPopup?) -> Unit,
+    onPick: (String) -> Unit,
+): Boolean {
+    val left = (bounds.center.x - cellWidth / 2).coerceIn(0f, (rootWidth - cellWidth * items.size).coerceAtLeast(0f))
+    fun indexAt(x: Float): Int = floor((x - left) / cellWidth).toInt().coerceIn(0, items.lastIndex)
+    var selected = indexAt(bounds.center.x)
+    onChange(AlternatesPopup(bounds, items, left, cellWidth, selected))
+    try {
+        while (true) {
+            val event = awaitPointerEvent()
+            val change = event.changes.firstOrNull { it.id == pointerId } ?: return false
+            if (!change.pressed) {
+                if (change.changedToUp()) {
+                    onPick(items[selected])
+                    return true
+                }
+                return false
+            }
+            val index = indexAt(bounds.left + change.position.x)
+            if (index != selected) {
+                selected = index
+                onChange(AlternatesPopup(bounds, items, left, cellWidth, selected))
+            }
+            change.consume()
+        }
+    } finally {
+        onChange(null)
+    }
+}
 
 @Composable
 fun RowScope.KeyButton(
@@ -65,6 +113,9 @@ fun RowScope.KeyButton(
     pill: Boolean = false,
     repeatOnHold: Boolean = false,
     previewText: String? = null,
+    alternatives: List<String> = emptyList(),
+    onAlternativesChange: (AlternatesPopup?) -> Unit = {},
+    onAlternative: (String) -> Unit = {},
     onPreviewShow: (KeyPreviewTarget) -> Unit = {},
     onPreviewHide: (KeyPreviewTarget) -> Unit = {},
     body: @Composable () -> Unit,
@@ -90,6 +141,9 @@ fun RowScope.KeyButton(
     val currentPreviewText by rememberUpdatedState(previewText)
     val currentShow by rememberUpdatedState(onPreviewShow)
     val currentHide by rememberUpdatedState(onPreviewHide)
+    val currentAlternatives by rememberUpdatedState(alternatives)
+    val currentPopupChange by rememberUpdatedState(onAlternativesChange)
+    val currentAlternative by rememberUpdatedState(onAlternative)
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -110,34 +164,65 @@ fun RowScope.KeyButton(
                 role = Role.Button
                 contentDescription = description
                 onClick { currentTap(); true }
+                customActions = alternatives.map { item ->
+                    CustomAccessibilityAction(item) {
+                        onAlternative(item)
+                        true
+                    }
+                }
             }
             .pointerInput(repeatOnHold) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val press = PressInteraction.Press(down.position)
                     interaction.tryEmit(press)
-                    val target = currentPreviewText?.let { text ->
-                        coordinates?.let { KeyPreviewTarget(text, it.boundsInRoot()) }
-                    }
+                    val attached = coordinates?.takeIf { it.isAttached }
+                    val bounds = attached?.boundsInRoot()
+                    val target = currentPreviewText?.let { text -> bounds?.let { KeyPreviewTarget(text, it) } }
                     if (target != null) currentShow(target)
-                    currentTap()
-                    val repeat = if (repeatOnHold) {
-                        scope.launch {
-                            delay(REPEAT_DELAY_MS)
-                            while (true) {
+                    val items = currentAlternatives
+                    val completed = if (items.isEmpty() || bounds == null || attached == null) {
+                        currentTap()
+                        val repeat = if (repeatOnHold) {
+                            scope.launch {
+                                delay(REPEAT_DELAY_MS)
+                                while (true) {
+                                    currentTap()
+                                    delay(REPEAT_INTERVAL_MS)
+                                }
+                            }
+                        } else {
+                            null
+                        }
+                        val up = waitForUpOrCancellation()
+                        repeat?.cancel()
+                        up != null
+                    } else {
+                        val outcome = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                            if (waitForUpOrCancellation() != null) HoldOutcome.Tap else HoldOutcome.Cancelled
+                        }
+                        when (outcome) {
+                            HoldOutcome.Tap -> {
                                 currentTap()
-                                delay(REPEAT_INTERVAL_MS)
+                                true
+                            }
+                            HoldOutcome.Cancelled -> false
+                            null -> {
+                                if (target != null) currentHide(target)
+                                chooseAlternative(
+                                    pointerId = down.id,
+                                    bounds = bounds,
+                                    items = items,
+                                    cellWidth = AlternativeCellWidth.toPx(),
+                                    rootWidth = attached.findRootCoordinates().size.width.toFloat(),
+                                    onChange = currentPopupChange,
+                                    onPick = currentAlternative,
+                                )
                             }
                         }
-                    } else {
-                        null
                     }
-                    val up = waitForUpOrCancellation()
-                    repeat?.cancel()
                     if (target != null) currentHide(target)
-                    interaction.tryEmit(
-                        if (up != null) PressInteraction.Release(press) else PressInteraction.Cancel(press),
-                    )
+                    interaction.tryEmit(if (completed) PressInteraction.Release(press) else PressInteraction.Cancel(press))
                 }
             },
         contentAlignment = Alignment.Center,
