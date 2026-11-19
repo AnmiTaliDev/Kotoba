@@ -21,6 +21,12 @@ On-screen keyboard (input method) for Android.
   <img src="screenshots/keyboard-emoji.png" width="190" alt="keyboard-emoji">
   <img src="screenshots/keyboard-tools.png" width="190" alt="keyboard-tools">
 </p>
+<p>
+  <img src="screenshots/layouts.png" width="190" alt="layouts">
+  <img src="screenshots/keyboard-ru.png" width="190" alt="keyboard-ru">
+  <img src="screenshots/keyboard-kk.png" width="190" alt="keyboard-kk">
+  <img src="screenshots/keyboard-de.png" width="190" alt="keyboard-de">
+</p>
 
 ## Dependencies
 
