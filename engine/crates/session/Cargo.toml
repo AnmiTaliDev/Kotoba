@@ -1,0 +1,15 @@
+[package]
+name = "kotoba-session"
+description = "Keyboard session: layout, layer and shift state, and key presses turned into text-editing commands"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+kotoba-layout.workspace = true
+kotoba-input.workspace = true
+kotoba-emoji.workspace = true
+
+[dev-dependencies]
+kotoba-data = { workspace = true }
