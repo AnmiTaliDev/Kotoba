@@ -1,0 +1,9 @@
+[package]
+name = "kotoba-input"
+description = "Pure text-editing logic of an on-screen keyboard: shift state, sentence start, double space"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
