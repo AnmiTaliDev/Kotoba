@@ -12,6 +12,7 @@ object LayoutParser {
     const val SupportedFormatVersion = 1
     const val MaxKeys = 200
     const val MaxLabelLength = 8
+    const val MaxHold = 12
     const val MaxKeyWeight = 10.0
     const val MaxRowWeight = 14.0
 
@@ -192,7 +193,7 @@ object LayoutParser {
         return when (val type = r.optString(raw, "type", path) ?: "char") {
             "char" -> {
                 val label = r.string(raw, "label", path) ?: return null
-                charKey(label, r.optString(raw, "shifted", path), w, path, locale, r)
+                charKey(label, r.optString(raw, "shifted", path), w, path, locale, r, raw)
             }
             "shift" -> ShiftKey(w)
             "delete" -> DeleteKey(w)
@@ -211,7 +212,15 @@ object LayoutParser {
         }
     }
 
-    private fun charKey(label: String, shifted: String?, weight: Float, path: String, locale: Locale?, r: Reader): Key? {
+    private fun charKey(
+        label: String,
+        shifted: String?,
+        weight: Float,
+        path: String,
+        locale: Locale?,
+        r: Reader,
+        json: JSONObject? = null,
+    ): Key? {
         if (label.isEmpty()) {
             r.error(path, "label must not be empty")
             return null
@@ -225,7 +234,32 @@ object LayoutParser {
             return null
         }
         val upper = shifted ?: label.uppercase(locale ?: Locale.ROOT)
-        return CharKey(label, upper, weight)
+        val hold = json?.let { readAlternatives(it, "hold", path, r) } ?: emptyList()
+        val explicitShifted = json?.let { readAlternatives(it, "holdShifted", path, r) }
+        if (explicitShifted != null && explicitShifted.size != hold.size) {
+            r.error("$path.holdShifted", "must have the same number of items as hold")
+            return null
+        }
+        val holdShifted = explicitShifted ?: hold.map { it.uppercase(locale ?: Locale.ROOT) }
+        return CharKey(label, upper, weight, hold, holdShifted)
+    }
+
+    private fun readAlternatives(json: JSONObject, key: String, path: String, r: Reader): List<String>? {
+        val array = r.optArray(json, key, path) ?: return null
+        if (array.length() > MaxHold) {
+            r.error("$path.$key", "has more than $MaxHold items")
+            return null
+        }
+        val items = ArrayList<String>(array.length())
+        for (i in 0 until array.length()) {
+            val item = array.opt(i)
+            if (item !is String || item.isEmpty() || item.codePointCount(0, item.length) > MaxLabelLength) {
+                r.error("$path.$key[$i]", "must be a string of 1 to $MaxLabelLength characters")
+                return null
+            }
+            items += item
+        }
+        return items
     }
 
     private class KeyCounter {

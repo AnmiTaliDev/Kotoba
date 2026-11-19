@@ -178,4 +178,67 @@ class LayoutParserTest {
         val paths = errors(parse(json)).map { it.path }
         assertTrue(paths.containsAll(listOf("$.id", "$.locale")))
     }
+
+    private fun withKey(key: JSONObject): JSONObject {
+        val json = minimal()
+        json.getJSONObject("layers").getJSONObject("letters").getJSONArray("rows").put(0, JSONArray().put(key))
+        return json
+    }
+
+    private fun firstKey(json: JSONObject): CharKey =
+        parse(json).layout!!.layers.getValue("letters").rows[0][0] as CharKey
+
+    @Test
+    fun readsHoldAlternatives() {
+        val key = firstKey(withKey(JSONObject().put("label", "e").put("hold", JSONArray(listOf("é", "è")))))
+        assertEquals(listOf("é", "è"), key.hold)
+        assertEquals(listOf("É", "È"), key.holdShifted)
+    }
+
+    @Test
+    fun explicitHoldShiftedOverridesUppercase() {
+        val key = firstKey(
+            withKey(
+                JSONObject().put("label", "s")
+                    .put("hold", JSONArray(listOf("ß")))
+                    .put("holdShifted", JSONArray(listOf("ẞ"))),
+            ),
+        )
+        assertEquals(listOf("ẞ"), key.holdShifted)
+    }
+
+    @Test
+    fun holdDefaultsToEmpty() {
+        assertEquals(emptyList<String>(), firstKey(withKey(JSONObject().put("label", "e"))).hold)
+    }
+
+    @Test
+    fun rejectsHoldShiftedWithDifferentSize() {
+        val key = JSONObject().put("label", "e")
+            .put("hold", JSONArray(listOf("é", "è"))).put("holdShifted", JSONArray(listOf("É")))
+        assertError(withKey(key), "$.layers.letters.rows[0][0].holdShifted")
+    }
+
+    @Test
+    fun rejectsTooManyAlternatives() {
+        val items = JSONArray(List(LayoutParser.MaxHold + 1) { "a" })
+        assertError(withKey(JSONObject().put("label", "e").put("hold", items)), "$.layers.letters.rows[0][0].hold")
+    }
+
+    @Test
+    fun rejectsBadAlternativeItems() {
+        assertError(
+            withKey(JSONObject().put("label", "e").put("hold", JSONArray().put(""))),
+            "$.layers.letters.rows[0][0].hold[0]",
+        )
+        assertError(
+            withKey(JSONObject().put("label", "e").put("hold", JSONArray().put(5))),
+            "$.layers.letters.rows[0][0].hold[0]",
+        )
+    }
+
+    @Test
+    fun rejectsNonArrayHold() {
+        assertError(withKey(JSONObject().put("label", "e").put("hold", "é")), "$.layers.letters.rows[0][0].hold")
+    }
 }

@@ -30,6 +30,8 @@ data class CharKey(
     val label: String,
     val shifted: String,
     override val weight: Float,
+    val hold: List<String> = emptyList(),
+    val holdShifted: List<String> = emptyList(),
 ) : Key
 
 data class ShiftKey(override val weight: Float) : Key
