@@ -8,6 +8,8 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.view.inputmethod.InputMethodSubtype
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.Lifecycle
@@ -70,6 +72,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         state = KeyboardState(LayoutRepository(assets).loadAll(), EmojiRepository(assets).load())
+        SubtypeRegistrar.register(this, state.layouts)
         scope.launch { settingsRepository.settings.collect { state.settings = it } }
         scope.launch { settingsRepository.recentEmoji.collect { state.recentEmoji = it } }
     }
@@ -103,8 +106,18 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         }
     }
 
+    override fun onCurrentInputMethodSubtypeChanged(newSubtype: InputMethodSubtype?) {
+        super.onCurrentInputMethodSubtypeChanged(newSubtype)
+        applySubtype(newSubtype)
+    }
+
+    private fun applySubtype(subtype: InputMethodSubtype?) {
+        SubtypeRegistrar.layoutIdOf(subtype)?.let(state::selectLayout)
+    }
+
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        applySubtype(getSystemService(InputMethodManager::class.java).currentInputMethodSubtype)
         if (!restarting) {
             state.layerId = state.layout.defaultLayer
             state.shift = ShiftState.Off

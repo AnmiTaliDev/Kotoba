@@ -31,6 +31,14 @@ class KeyboardState(
 
     val layout: KeyboardLayout get() = layouts[layoutIndex]
 
+    fun selectLayout(id: String) {
+        val index = layouts.indexOfFirst { it.id == id }
+        if (index < 0 || index == layoutIndex) return
+        layoutIndex = index
+        layerId = layout.defaultLayer
+        shift = ShiftState.Off
+    }
+
     fun resetEmojiCategory() {
         val firstFilled = emojiCategories.indexOfFirst { !it.recent }.coerceAtLeast(0)
         emojiCategory = if (recentEmoji.isNotEmpty()) emojiCategories.indexOfFirst { it.recent }.coerceAtLeast(0) else firstFilled
