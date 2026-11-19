@@ -20,6 +20,8 @@ class BuiltInLayoutsTest {
         "de" to "abcdefghijklmnopqrstuvwxyzäöüß",
         "kk-latn-anmitalidev" to "aäbgğdejzikqlmnñoöprstuūühşyı",
         "kk-latn-2021" to "aäbdefgğhıijklmnñoöpqrsştuūüvyz",
+        "tr-q" to "abcçdefgğhıijklmnoöprsştuüvyzqwx",
+        "tr-f" to "abcçdefgğhıijklmnoöprsştuüvyzqwx",
     )
 
     private val apostrophe = "\u02bc"
@@ -181,5 +183,28 @@ class BuiltInLayoutsTest {
         val key = layout.layers.getValue("letters").rows.flatten().filterIsInstance<CharKey>().single { it.label == "a" }
         assertEquals(listOf("a$apostrophe"), key.hold)
         assertEquals(listOf("A$apostrophe"), key.holdShifted)
+    }
+
+    @Test
+    fun turkishLayoutsUseTurkishCasingForDottedAndDotlessI() {
+        val layouts = load().layouts.associateBy { it.id }
+        for (id in listOf("tr-q", "tr-f")) {
+            val keys = layouts.getValue(id).layers.getValue("letters").rows.flatten().filterIsInstance<CharKey>()
+                .associateBy { it.label }
+            assertEquals("$id: i", "İ", keys.getValue("i").shifted)
+            assertEquals("$id: ı", "I", keys.getValue("ı").shifted)
+        }
+    }
+
+    @Test
+    fun turkishLayoutsHaveThirtyTwoLettersAndCurrencyOnLongPress() {
+        val layouts = load().layouts.associateBy { it.id }
+        for (id in listOf("tr-q", "tr-f")) {
+            val keys = layouts.getValue(id).layers.getValue("letters").rows.flatten().filterIsInstance<CharKey>()
+            val letters = keys.map { it.label }.filter { it.single().isLetter() }
+            assertEquals("$id letter keys", 32, letters.size)
+            assertEquals(listOf("€"), keys.single { it.label == "e" }.hold)
+            assertEquals(listOf("₺"), keys.single { it.label == "t" }.hold)
+        }
     }
 }
