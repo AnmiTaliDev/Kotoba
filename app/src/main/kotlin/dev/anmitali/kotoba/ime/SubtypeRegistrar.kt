@@ -18,13 +18,19 @@ object SubtypeRegistrar {
         val id = ComponentName(context, KotobaInputMethodService::class.java).flattenToShortString()
         val subtypes = layouts.map { layout ->
             InputMethodSubtypeBuilder()
-                .setSubtypeLocale(Locale.forLanguageTag(layout.locale).toString())
+                .setSubtypeLocale(subtypeLocale(layout.locale))
+                .setLanguageTag(layout.locale)
                 .setSubtypeMode(MODE)
                 .setSubtypeNameOverride(layout.name)
                 .setSubtypeExtraValue(LAYOUT_PREFIX + layout.id)
                 .build()
         }
         manager.setAdditionalInputMethodSubtypes(id, subtypes.toTypedArray())
+    }
+
+    private fun subtypeLocale(tag: String): String {
+        val locale = Locale.forLanguageTag(tag)
+        return Locale.Builder().setLanguage(locale.language).setRegion(locale.country).build().toString()
     }
 
     fun layoutIdOf(subtype: InputMethodSubtype?): String? =
