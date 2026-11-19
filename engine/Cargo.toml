@@ -1,0 +1,33 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/layout",
+    "crates/input",
+    "crates/emoji",
+    "crates/data",
+    "crates/session",
+    "crates/ffi",
+    "crates/cli",
+    "crates/bindgen",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "GPL-3.0-only"
+
+[workspace.dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+kotoba-layout = { path = "crates/layout" }
+kotoba-input = { path = "crates/input" }
+kotoba-emoji = { path = "crates/emoji" }
+kotoba-data = { path = "crates/data" }
+kotoba-session = { path = "crates/session" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "debuginfo"
