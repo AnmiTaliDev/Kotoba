@@ -1,36 +1,42 @@
 package dev.anmitali.kotoba.layout
 
-import android.content.res.AssetManager
+import dev.anmitali.kotoba.engine.Engine
+import dev.anmitali.kotoba.engine.ImportResult
+import dev.anmitali.kotoba.engine.KeyboardLayout
+import dev.anmitali.kotoba.engine.LayoutFailure
+import dev.anmitali.kotoba.engine.LayoutSource
+import dev.anmitali.kotoba.engine.LoadedSource
+import dev.anmitali.kotoba.engine.builtInSources
+import dev.anmitali.kotoba.engine.checkImport
+import dev.anmitali.kotoba.engine.userLayoutOrigin
 
-class LayoutRepository(
-    private val assets: AssetManager,
-    private val userStore: UserLayoutStore,
-) {
+class LoadedLayouts(
+    val layouts: List<KeyboardLayout>,
+    val failures: List<LayoutFailure>,
+    val sources: Map<String, LoadedSource>,
+)
 
-    fun loadAll(): LoadedLayouts = LayoutLoader.load(builtInSources() + userStore.sources())
+class LayoutRepository(private val userStore: UserLayoutStore) {
 
-    fun builtInSources(): List<LayoutSource> =
-        assets.list(DIRECTORY).orEmpty()
-            .filter { it.endsWith(".json") }
-            .sorted()
-            .map { file ->
-                val text = assets.open("$DIRECTORY/$file").bufferedReader().use { it.readText() }
-                LayoutSource(origin = "$DIRECTORY/$file", text = text, builtIn = true)
-            }
+    fun builtInLayoutSources(): List<LayoutSource> = builtInSources()
 
-    fun userSources(): List<LayoutSource> = userStore.sources()
+    fun userSources(): List<LayoutSource> =
+        userStore.files().map { LayoutSource(origin = userLayoutOrigin(it.id), text = it.text, builtIn = false) }
 
-    fun check(text: String): LayoutImport.Result = LayoutImport.check(text, builtInSources(), userStore.sources())
+    fun allSources(): List<LayoutSource> = builtInLayoutSources() + userSources()
 
-    fun import(text: String): LayoutImport.Result {
+    fun loadAll(): LoadedLayouts =
+        Engine(allSources()).use { engine ->
+            LoadedLayouts(engine.layouts(), engine.failures(), engine.sources().associateBy { it.layoutId })
+        }
+
+    fun check(text: String): ImportResult = checkImport(text, builtInLayoutSources(), userSources())
+
+    fun import(text: String): ImportResult {
         val result = check(text)
-        if (result is LayoutImport.Result.Valid) userStore.save(result.layout.id, text)
+        if (result is ImportResult.Valid) userStore.save(result.layout.id, text)
         return result
     }
 
     fun delete(id: String): Boolean = userStore.delete(id)
-
-    private companion object {
-        const val DIRECTORY = "layouts"
-    }
 }

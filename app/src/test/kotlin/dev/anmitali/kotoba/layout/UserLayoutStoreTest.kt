@@ -1,8 +1,10 @@
 package dev.anmitali.kotoba.layout
 
+import java.io.ByteArrayInputStream
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -17,17 +19,16 @@ class UserLayoutStoreTest {
 
     @Test
     fun emptyWhenDirectoryMissing() {
-        assertTrue(store().sources().isEmpty())
+        assertTrue(store().files().isEmpty())
     }
 
     @Test
-    fun savedLayoutIsListedWithOrigin() {
+    fun savedLayoutIsListedWithItsId() {
         val store = store()
         store.save("mine", "{}")
-        val sources = store.sources()
-        assertEquals(listOf(UserLayoutStore.originOf("mine")), sources.map { it.origin })
-        assertFalse(sources.single().builtIn)
-        assertEquals("{}", sources.single().text)
+        val files = store.files()
+        assertEquals(listOf("mine"), files.map { it.id })
+        assertEquals("{}", files.single().text)
     }
 
     @Test
@@ -35,7 +36,7 @@ class UserLayoutStoreTest {
         val store = store()
         store.save("mine", "one")
         store.save("mine", "two")
-        assertEquals("two", store.sources().single().text)
+        assertEquals("two", store.files().single().text)
     }
 
     @Test
@@ -51,7 +52,7 @@ class UserLayoutStoreTest {
         val store = store()
         store.save("mine", "{}")
         assertTrue(store.delete("mine"))
-        assertTrue(store.sources().isEmpty())
+        assertTrue(store.files().isEmpty())
         assertFalse(store.delete("mine"))
     }
 
@@ -60,6 +61,22 @@ class UserLayoutStoreTest {
         val store = store()
         store.save("mine", "{}")
         File(folder.root, "layouts/readme.txt").writeText("x")
-        assertEquals(1, store.sources().size)
+        assertEquals(1, store.files().size)
+    }
+
+    @Test
+    fun readBoundedReturnsTextWithinLimit() {
+        assertEquals("abc", readBounded(ByteArrayInputStream("abc".toByteArray()), limit = 3))
+    }
+
+    @Test
+    fun readBoundedRejectsOversizedInput() {
+        assertNull(readBounded(ByteArrayInputStream("abcd".toByteArray()), limit = 3))
+    }
+
+    @Test
+    fun readBoundedKeepsUtf8() {
+        val text = "Ыў"
+        assertEquals(text, readBounded(ByteArrayInputStream(text.toByteArray()), limit = 100))
     }
 }

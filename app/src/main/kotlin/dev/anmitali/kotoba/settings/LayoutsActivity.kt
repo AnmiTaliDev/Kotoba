@@ -16,7 +16,7 @@ class LayoutsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val repository = LayoutRepository(assets, UserLayoutStore(File(filesDir, UserLayoutsDirectory)))
+        val repository = LayoutRepository(UserLayoutStore(File(filesDir, UserLayoutsDirectory)))
         val settings = SettingsRepository(this)
         setContent {
             KotobaTheme {

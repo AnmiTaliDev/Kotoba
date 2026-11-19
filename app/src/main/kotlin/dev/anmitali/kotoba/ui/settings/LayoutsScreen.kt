@@ -52,11 +52,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.anmitali.kotoba.R
 import dev.anmitali.kotoba.ime.KotobaInputMethodService
-import dev.anmitali.kotoba.layout.KeyboardLayout
-import dev.anmitali.kotoba.layout.LayoutImport
-import dev.anmitali.kotoba.layout.LayoutIssue
+import dev.anmitali.kotoba.engine.ImportResult
+import dev.anmitali.kotoba.engine.KeyboardLayout
+import dev.anmitali.kotoba.engine.LayoutIssue
+import dev.anmitali.kotoba.engine.importTooLargeIssue
+import dev.anmitali.kotoba.engine.maxLayoutFileBytes
 import dev.anmitali.kotoba.layout.LayoutRepository
 import dev.anmitali.kotoba.layout.LoadedLayouts
+import dev.anmitali.kotoba.layout.readBounded
 import dev.anmitali.kotoba.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,12 +93,12 @@ fun LayoutsScreen(
         scope.launch {
             val result = withContext(Dispatchers.IO) { importFrom(context, repository, uri) }
             when (result) {
-                is LayoutImport.Result.Valid -> {
+                is ImportResult.Valid -> {
                     settings.bumpLayoutsRevision()
                     refresh++
                     snackbar.showSnackbar(context.getString(R.string.layout_imported, result.layout.name))
                 }
-                is LayoutImport.Result.Invalid -> rejected = result.issues
+                is ImportResult.Invalid -> rejected = result.issues
             }
         }
     }
@@ -270,10 +273,10 @@ private fun LayoutRow(layout: KeyboardLayout, onExport: () -> Unit, onDelete: ((
     )
 }
 
-private fun importFrom(context: Context, repository: LayoutRepository, uri: Uri): LayoutImport.Result {
+private fun importFrom(context: Context, repository: LayoutRepository, uri: Uri): ImportResult {
     val text = runCatching {
-        context.contentResolver.openInputStream(uri)?.use { LayoutImport.readBounded(it) }
-    }.getOrNull() ?: return LayoutImport.tooLarge()
+        context.contentResolver.openInputStream(uri)?.use { readBounded(it, maxLayoutFileBytes()) }
+    }.getOrNull() ?: return ImportResult.Invalid(listOf(importTooLargeIssue()))
     return repository.import(text)
 }
 

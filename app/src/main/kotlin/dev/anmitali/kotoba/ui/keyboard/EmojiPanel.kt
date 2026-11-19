@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Icon
 import dev.anmitali.kotoba.R
-import dev.anmitali.kotoba.layout.Layer
+import dev.anmitali.kotoba.engine.Layer
 
 private val EmojiCellSize = 44.dp
 private val EmojiBarHeight = 48.dp

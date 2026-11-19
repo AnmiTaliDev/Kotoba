@@ -49,20 +49,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.anmitali.kotoba.R
-import dev.anmitali.kotoba.input.EnterAction
-import dev.anmitali.kotoba.input.ShiftState
-import dev.anmitali.kotoba.input.alternativesOf
-import dev.anmitali.kotoba.input.outputOf
-import dev.anmitali.kotoba.layout.CharKey
-import dev.anmitali.kotoba.layout.DeleteKey
-import dev.anmitali.kotoba.layout.EnterKey
-import dev.anmitali.kotoba.layout.Key
-import dev.anmitali.kotoba.layout.Layer
-import dev.anmitali.kotoba.layout.LayerKey
-import dev.anmitali.kotoba.layout.LayerKind
-import dev.anmitali.kotoba.layout.ShiftKey
-import dev.anmitali.kotoba.layout.SpaceKey
-import dev.anmitali.kotoba.layout.SpacerKey
+import dev.anmitali.kotoba.engine.EnterAction
+import dev.anmitali.kotoba.engine.Key
+import dev.anmitali.kotoba.engine.Layer
+import dev.anmitali.kotoba.engine.LayerKind
+import dev.anmitali.kotoba.engine.ShiftState
 import kotlin.math.roundToInt
 
 data class KeyboardActions(
@@ -115,12 +106,12 @@ fun KeyboardScreen(
                     if (state.toolsOpen) {
                         ToolsPanel(actions = actions, height = BodyHeight)
                     } else Crossfade(
-                        targetState = state.layerId,
+                        targetState = state.session.layerId,
                         animationSpec = tween(durationMillis = LayerFadeMs),
                         label = "keyboardLayer",
                     ) { layerId ->
-                        val layer = state.layout.layers.getValue(layerId)
-                        if (layer.kind == LayerKind.Emoji) {
+                        val layer = state.layerOf(layerId)
+                        if (layer.kind == LayerKind.EMOJI) {
                             EmojiPanel(state, layer, actions, BodyHeight, keyCornerRadius)
                             return@Crossfade
                         }
@@ -267,8 +258,9 @@ private fun RowScope.KeyCell(
     val colors = MaterialTheme.colorScheme
     val keyContainer = if (isSystemInDarkTheme()) colors.surfaceContainerHighest else colors.surface
     when (key) {
-        is CharKey -> {
-            val text = outputOf(key, layer, state.shift)
+        is Key.Char -> {
+            val shifted = layer.id == state.session.layerId && state.session.shiftApplies
+            val text = key.text(shifted)
             KeyButton(
                 weight = key.weight,
                 description = text,
@@ -277,7 +269,7 @@ private fun RowScope.KeyCell(
                 cornerRadius = cornerRadius,
                 onTap = { actions.onChar(text) },
                 previewText = text,
-                alternatives = alternativesOf(key, layer, state.shift),
+                alternatives = key.alternatives(shifted),
                 onAlternativesChange = { state.alternates = it },
                 onAlternative = actions.onChar,
                 onPreviewShow = { state.preview = it },
@@ -287,22 +279,22 @@ private fun RowScope.KeyCell(
             }
         }
 
-        is ShiftKey -> {
+        is Key.Shift -> {
             val icon: ImageVector
             val container: Color
             val content: Color
-            when (state.shift) {
-                ShiftState.Off -> {
+            when (state.session.shift) {
+                ShiftState.OFF -> {
                     icon = ShiftOffIcon
                     container = colors.secondaryContainer
                     content = colors.onSecondaryContainer
                 }
-                ShiftState.Once -> {
+                ShiftState.ONCE -> {
                     icon = ShiftOnceIcon
                     container = colors.primaryContainer
                     content = colors.onPrimaryContainer
                 }
-                ShiftState.Caps -> {
+                ShiftState.CAPS -> {
                     icon = ShiftCapsIcon
                     container = colors.primary
                     content = colors.onPrimary
@@ -311,7 +303,7 @@ private fun RowScope.KeyCell(
             KeyButton(
                 weight = key.weight,
                 description = stringResource(
-                    if (state.shift == ShiftState.Caps) R.string.key_caps_lock else R.string.key_shift,
+                    if (state.session.shift == ShiftState.CAPS) R.string.key_caps_lock else R.string.key_shift,
                 ),
                 container = container,
                 content = content,
@@ -322,7 +314,7 @@ private fun RowScope.KeyCell(
             }
         }
 
-        is DeleteKey -> KeyButton(
+        is Key.Delete -> KeyButton(
             weight = key.weight,
             description = stringResource(R.string.key_delete),
             container = colors.secondaryContainer,
@@ -334,9 +326,9 @@ private fun RowScope.KeyCell(
             Icon(imageVector = BackspaceIcon, contentDescription = null, tint = colors.onSecondaryContainer)
         }
 
-        is EnterKey -> {
-            val action = state.enterAction
-            val isAction = action != EnterAction.Newline
+        is Key.Enter -> {
+            val action = state.session.enterAction
+            val isAction = action != EnterAction.NEWLINE
             val container = if (isAction) colors.primary else colors.secondaryContainer
             val content = if (isAction) colors.onPrimary else colors.onSecondaryContainer
             KeyButton(
@@ -352,7 +344,7 @@ private fun RowScope.KeyCell(
             }
         }
 
-        is SpaceKey -> KeyButton(
+        is Key.Space -> KeyButton(
             weight = key.weight,
             description = stringResource(R.string.key_space),
             container = keyContainer,
@@ -367,7 +359,7 @@ private fun RowScope.KeyCell(
             )
         }
 
-        is LayerKey -> KeyButton(
+        is Key.Layer -> KeyButton(
             weight = key.weight,
             description = key.label,
             container = colors.secondaryContainer,
@@ -391,23 +383,23 @@ private fun RowScope.KeyCell(
             }
         }
 
-        is SpacerKey -> Spacer(Modifier.weight(key.weight))
+        is Key.Spacer -> Spacer(Modifier.weight(key.weight))
     }
 }
 
 private fun enterDescription(action: EnterAction): Int = when (action) {
-    EnterAction.Newline -> R.string.key_enter
-    EnterAction.Go -> R.string.key_go
-    EnterAction.Search -> R.string.key_search
-    EnterAction.Send -> R.string.key_send
-    EnterAction.Next -> R.string.key_next
-    EnterAction.Done -> R.string.key_done
+    EnterAction.NEWLINE -> R.string.key_enter
+    EnterAction.GO -> R.string.key_go
+    EnterAction.SEARCH -> R.string.key_search
+    EnterAction.SEND -> R.string.key_send
+    EnterAction.NEXT -> R.string.key_next
+    EnterAction.DONE -> R.string.key_done
 }
 
 private fun enterIcon(action: EnterAction): ImageVector = when (action) {
-    EnterAction.Newline -> ReturnIcon
-    EnterAction.Go, EnterAction.Next -> Icons.AutoMirrored.Filled.ArrowForward
-    EnterAction.Search -> Icons.Filled.Search
-    EnterAction.Send -> Icons.AutoMirrored.Filled.Send
-    EnterAction.Done -> Icons.Filled.Check
+    EnterAction.NEWLINE -> ReturnIcon
+    EnterAction.GO, EnterAction.NEXT -> Icons.AutoMirrored.Filled.ArrowForward
+    EnterAction.SEARCH -> Icons.Filled.Search
+    EnterAction.SEND -> Icons.AutoMirrored.Filled.Send
+    EnterAction.DONE -> Icons.Filled.Check
 }

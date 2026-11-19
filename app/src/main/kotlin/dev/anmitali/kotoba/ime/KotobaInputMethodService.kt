@@ -9,6 +9,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.InputMethodSubtype
 import androidx.compose.ui.platform.ComposeView
@@ -21,15 +22,14 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import dev.anmitali.kotoba.emoji.EmojiRepository
-import dev.anmitali.kotoba.input.EnterAction
-import dev.anmitali.kotoba.input.ShiftState
+import dev.anmitali.kotoba.engine.Command
+import dev.anmitali.kotoba.engine.Context
+import dev.anmitali.kotoba.engine.Engine
+import dev.anmitali.kotoba.engine.EngineException
+import dev.anmitali.kotoba.engine.Event
+import dev.anmitali.kotoba.engine.emojiCategories
 import dev.anmitali.kotoba.input.allowsAutoCapitalize
 import dev.anmitali.kotoba.input.enterActionOf
-import dev.anmitali.kotoba.input.shiftAfterEdit
-import dev.anmitali.kotoba.input.spaceEdit
-import dev.anmitali.kotoba.input.tapShift
-import dev.anmitali.kotoba.layout.KeyboardLayout
 import dev.anmitali.kotoba.layout.LayoutRepository
 import dev.anmitali.kotoba.layout.UserLayoutStore
 import dev.anmitali.kotoba.settings.SettingsActivity
@@ -57,20 +57,21 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     private val savedStateController = SavedStateRegistryController.create(this)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val settingsRepository by lazy { SettingsRepository(this) }
-    private val layoutRepository by lazy { LayoutRepository(assets, UserLayoutStore(File(filesDir, UserLayoutsDirectory))) }
+    private val layoutRepository by lazy { LayoutRepository(UserLayoutStore(File(filesDir, UserLayoutsDirectory))) }
+    private lateinit var engine: Engine
     private lateinit var state: KeyboardState
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateController.savedStateRegistry
 
     private val actions = KeyboardActions(
-        onChar = ::commit,
-        onEmoji = ::commitEmoji,
-        onShift = ::tapShiftKey,
-        onDelete = ::deleteBackward,
-        onEnter = ::enter,
-        onSpace = ::space,
-        onLayer = { state.layerId = it },
+        onChar = { dispatch(Event.Char(it)) },
+        onEmoji = ::onEmoji,
+        onShift = { dispatch(Event.Shift) },
+        onDelete = { dispatch(Event.Delete) },
+        onEnter = { dispatch(Event.Enter) },
+        onSpace = { dispatch(Event.Space) },
+        onLayer = { dispatch(Event.SwitchLayer(it)) },
         onOpenSettings = ::openSettings,
     )
 
@@ -79,16 +80,23 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performAttach()
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
-        state = KeyboardState(loadLayouts(), EmojiRepository(assets).load())
-        state.preferLanguage(resources.configuration.locales[0].language)
+        engine = createEngine()
+        engine.preferLanguage(resources.configuration.locales[0].language)
+        state = KeyboardState(engine.layouts(), emojiCategories(), engine.state())
         SubtypeRegistrar.register(this, state.layouts)
         scope.launch { settingsRepository.settings.collect { state.settings = it } }
-        scope.launch { settingsRepository.recentEmoji.collect { state.recentEmoji = it } }
+        scope.launch {
+            settingsRepository.recentEmoji.collect {
+                engine.setRecents(it)
+                state.recentEmoji = it
+            }
+        }
         scope.launch { settingsRepository.layoutsRevision.drop(1).collect { reloadLayouts() } }
     }
 
     override fun onDestroy() {
         scope.cancel()
+        engine.close()
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
         super.onDestroy()
     }
@@ -122,21 +130,22 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     }
 
     private fun applySubtype(subtype: InputMethodSubtype?) {
-        SubtypeRegistrar.layoutIdOf(subtype)?.let(state::selectLayout)
+        val id = SubtypeRegistrar.layoutIdOf(subtype) ?: return
+        engine.selectLayout(id)
+        state.update(engine.state())
     }
 
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         applySubtype(getSystemService(InputMethodManager::class.java).currentInputMethodSubtype)
+        engine.startInput(enterActionOf(info.imeOptions), allowsAutoCapitalize(info.inputType), restarting)
+        if (engine.needsTextAfterEdit()) engine.afterEdit(textBeforeCursor())
+        state.update(engine.state())
         if (!restarting) {
-            state.layerId = state.layout.defaultLayer
-            state.shift = ShiftState.Off
             state.toolsOpen = false
             state.resetEmojiCategory()
         }
-        state.enterAction = enterActionOf(info.imeOptions)
         updateNavigationBarHeight()
-        refreshShift()
     }
 
     private fun updateNavigationBarHeight() {
@@ -155,20 +164,28 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         return if (id > 0) resources.getDimensionPixelSize(id) else 0
     }
 
-    private fun reloadLayouts() {
-        val layouts = loadLayouts()
-        state.replaceLayouts(layouts)
-        SubtypeRegistrar.register(this, layouts)
+    private fun createEngine(): Engine {
+        val engine = try {
+            Engine(layoutRepository.allSources())
+        } catch (error: EngineException) {
+            error("No valid keyboard layouts: ${error.message}")
+        }
+        logLayoutProblems(engine)
+        return engine
     }
 
-    private fun loadLayouts(): List<KeyboardLayout> {
-        val loaded = layoutRepository.loadAll()
-        for (failure in loaded.failures) {
+    private fun reloadLayouts() {
+        engine.reload(layoutRepository.allSources())
+        logLayoutProblems(engine)
+        state.replaceLayouts(engine.layouts(), engine.state())
+        SubtypeRegistrar.register(this, state.layouts)
+    }
+
+    private fun logLayoutProblems(engine: Engine) {
+        for (failure in engine.failures()) {
             val details = failure.issues.joinToString("; ") { "${it.path}: ${it.message}" }
             Log.w(TAG, "Layout ${failure.origin} skipped: $details")
         }
-        check(loaded.layouts.isNotEmpty()) { "No valid keyboard layouts" }
-        return loaded.layouts
     }
 
     private fun openSettings() {
@@ -177,63 +194,41 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         startActivity(intent)
     }
 
-    private fun commitEmoji(emoji: String) {
-        commit(emoji)
-        scope.launch { settingsRepository.recordEmoji(emoji) }
+    private fun onEmoji(emoji: String) {
+        dispatch(Event.Emoji(emoji))
+        val recents = engine.recents()
+        state.recentEmoji = recents
+        scope.launch { settingsRepository.saveRecentEmoji(recents) }
     }
 
-    private fun commit(text: String) {
-        val ic = currentInputConnection ?: return
-        ic.commitText(text, 1)
-        refreshShift()
-    }
+    private fun textBeforeCursor(): String =
+        currentInputConnection?.getTextBeforeCursor(CONTEXT_CHARS, 0)?.toString() ?: ""
 
-    private fun tapShiftKey() {
-        val now = SystemClock.uptimeMillis()
-        state.shift = tapShift(state.shift, now - state.lastShiftTapAt)
-        state.lastShiftTapAt = now
-    }
-
-    private fun deleteBackward() {
-        val ic = currentInputConnection ?: return
-        if (ic.getSelectedText(0).isNullOrEmpty()) {
-            ic.deleteSurroundingTextInCodePoints(1, 0)
-        } else {
-            ic.commitText("", 1)
-        }
-        refreshShift()
-    }
-
-    private fun space() {
-        val ic = currentInputConnection ?: return
-        val before = ic.getTextBeforeCursor(CONTEXT_CHARS, 0) ?: ""
-        val edit = spaceEdit(before, state.layout.doubleSpace)
-        ic.beginBatchEdit()
-        if (edit.deleteBefore > 0) ic.deleteSurroundingText(edit.deleteBefore, 0)
-        ic.commitText(edit.insert, 1)
-        ic.endBatchEdit()
-        refreshShift()
-    }
-
-    private fun enter() {
-        if (state.enterAction == EnterAction.Newline) {
-            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
-        } else {
-            val ic = currentInputConnection ?: return
-            ic.performEditorAction(currentInputEditorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
-        }
-        refreshShift()
-    }
-
-    private fun refreshShift() {
-        val ic = currentInputConnection ?: return
-        val autoCapitalize = state.layout.autoCapitalize && allowsAutoCapitalize(currentInputEditorInfo.inputType)
-        val before = if (autoCapitalize) ic.getTextBeforeCursor(CONTEXT_CHARS, 0) ?: "" else ""
-        state.shift = shiftAfterEdit(
-            current = state.shift,
-            textBefore = before,
-            sentenceEnd = state.layout.sentenceEnd,
-            autoCapitalize = autoCapitalize,
+    private fun dispatch(event: Event) {
+        val connection = currentInputConnection
+        val editing = event !is Event.Shift && event !is Event.SwitchLayer
+        if (editing && connection == null) return
+        val needs = engine.needs(event)
+        val context = Context(
+            nowMs = SystemClock.uptimeMillis(),
+            textBefore = if (needs.textBefore) textBeforeCursor() else "",
+            hasSelection = needs.selection && !connection?.getSelectedText(0).isNullOrEmpty(),
         )
+        val outcome = engine.press(event, context)
+        if (connection != null) outcome.commands.forEach { apply(connection, it) }
+        if (outcome.needsTextAfterEdit) engine.afterEdit(textBeforeCursor())
+        state.update(engine.state())
+    }
+
+    private fun apply(connection: InputConnection, command: Command) {
+        when (command) {
+            is Command.Commit -> connection.commitText(command.text, 1)
+            is Command.DeleteBefore -> connection.deleteSurroundingTextInCodePoints(command.codePoints, 0)
+            Command.BeginBatch -> connection.beginBatchEdit()
+            Command.EndBatch -> connection.endBatchEdit()
+            Command.SendEnterKey -> sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            Command.PerformEditorAction ->
+                connection.performEditorAction(currentInputEditorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
+        }
     }
 }

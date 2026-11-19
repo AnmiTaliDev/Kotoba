@@ -5,7 +5,7 @@ import android.content.Context
 import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.InputMethodSubtype
 import android.view.inputmethod.InputMethodSubtype.InputMethodSubtypeBuilder
-import dev.anmitali.kotoba.layout.KeyboardLayout
+import dev.anmitali.kotoba.engine.KeyboardLayout
 import java.util.Locale
 
 object SubtypeRegistrar {
