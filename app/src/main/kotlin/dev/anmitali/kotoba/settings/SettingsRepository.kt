@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dev.anmitali.kotoba.emoji.addRecent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -14,6 +16,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 private val KeyCornerRadiusKey = intPreferencesKey("key_corner_radius_dp")
 private val NumberRowKey = booleanPreferencesKey("number_row")
+private val RecentEmojiKey = stringPreferencesKey("recent_emoji")
+private const val RecentSeparator = "\u001F"
 
 class SettingsRepository(context: Context) {
 
@@ -25,6 +29,17 @@ class SettingsRepository(context: Context) {
                 .coerceIn(KeyboardSettings.MinKeyCornerRadiusDp, KeyboardSettings.MaxKeyCornerRadiusDp),
             numberRow = prefs[NumberRowKey] ?: false,
         )
+    }
+
+    val recentEmoji: Flow<List<String>> = store.data.map { prefs ->
+        prefs[RecentEmojiKey]?.split(RecentSeparator)?.filter { it.isNotEmpty() } ?: emptyList()
+    }
+
+    suspend fun recordEmoji(emoji: String) {
+        store.edit { prefs ->
+            val current = prefs[RecentEmojiKey]?.split(RecentSeparator)?.filter { it.isNotEmpty() } ?: emptyList()
+            prefs[RecentEmojiKey] = addRecent(current, emoji).joinToString(RecentSeparator)
+        }
     }
 
     suspend fun setKeyCornerRadius(dp: Int) {
