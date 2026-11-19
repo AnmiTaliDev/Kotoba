@@ -10,6 +10,7 @@ import dev.anmitali.kotoba.input.EnterAction
 import dev.anmitali.kotoba.input.ShiftState
 import dev.anmitali.kotoba.layout.KeyboardLayout
 import dev.anmitali.kotoba.settings.KeyboardSettings
+import java.util.Locale
 
 class KeyPreviewTarget(val text: String, val bounds: Rect)
 
@@ -47,6 +48,11 @@ class KeyboardState(
         layouts = newLayouts
         layoutIndex = newLayouts.indexOfFirst { it.id == currentId }.coerceAtLeast(0)
         if (layerId !in layout.layers) layerId = layout.defaultLayer
+    }
+
+    fun preferLanguage(language: String) {
+        val match = layouts.firstOrNull { Locale.forLanguageTag(it.locale).language == language } ?: return
+        selectLayout(match.id)
     }
 
     fun selectLayout(id: String) {

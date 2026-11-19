@@ -2,6 +2,7 @@
   "id": "latin",
   "name": "English",
   "locale": "en",
+  "order": 0,
   "defaultLayer": "letters",
   "punctuation": {
     "sentenceEnd": ".!?",

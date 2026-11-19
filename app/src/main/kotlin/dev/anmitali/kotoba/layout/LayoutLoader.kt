@@ -68,6 +68,7 @@ object LayoutLoader {
             loadedSources[layout.id] = source
             if (result.issues.isNotEmpty()) warnings += LayoutFailure(source.origin, result.issues)
         }
+        layouts.sortWith(compareBy({ it.order }, { it.name }))
         return LoadedLayouts(layouts, failures, warnings, loadedSources)
     }
 
@@ -90,6 +91,7 @@ object LayoutLoader {
         merged.remove("id")
         merged.remove("name")
         merged.remove("locale")
+        merged.remove("order")
         for (key in child.keys()) {
             when (key) {
                 "extends" -> Unit

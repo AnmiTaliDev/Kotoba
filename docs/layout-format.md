@@ -50,6 +50,7 @@ Importing a file whose `id` matches an already imported layout replaces it. An `
 | `locale` | string | yes | BCP 47 language tag, for example `en`, `de`, `kk`. Controls letter case conversion. |
 | `extends` | string | no | Id of a built-in layout to inherit from. See [Inheritance](#inheritance). |
 | `defaultLayer` | string | yes* | Id of the layer shown first. |
+| `order` | integer | no | Position in lists, lower first, default `100`. Layouts with equal `order` are sorted by `name`. |
 | `autoCapitalize` | boolean | no | Capitalize the first letter of a sentence, default `true`. Set `false` for scripts without letter case. |
 | `punctuation` | object | yes* | Sentence handling, see below. |
 | `numberRow` | array | no | One row of keys shown above the letter rows when the user enables the number row. |
@@ -124,7 +125,7 @@ Behavior:
 - `layers`: each layer in the file replaces the layer with the same id. Other layers are inherited.
 - `punctuation`: keys present in the file replace the inherited keys.
 - every other field replaces the inherited one.
-- `id`, `name` and `locale` are never inherited.
+- `id`, `name`, `locale` and `order` are never inherited.
 
 Only built-in layouts can be extended, and a layout that itself extends another cannot be a base.
 

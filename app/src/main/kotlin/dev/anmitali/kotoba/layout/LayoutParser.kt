@@ -13,6 +13,7 @@ object LayoutParser {
     const val MaxKeys = 200
     const val MaxLabelLength = 8
     const val MaxHold = 12
+    const val DefaultOrder = 100
     const val MaxKeyWeight = 10.0
     const val MaxRowWeight = 14.0
 
@@ -39,6 +40,7 @@ object LayoutParser {
         val localeTag = r.string(root, "locale", "$")
         val locale = localeTag?.let { parseLocale(it, r) }
         val autoCapitalize = r.optBoolean(root, "autoCapitalize", "$") ?: true
+        val order = r.optInt(root, "order", "$") ?: DefaultOrder
 
         val punctuation = r.obj(root, "punctuation", "$")
         val sentenceEnd = punctuation?.let { r.string(it, "sentenceEnd", "$.punctuation") }
@@ -101,6 +103,7 @@ object LayoutParser {
             sentenceEnd = sentenceEnd,
             doubleSpace = doubleSpace,
             autoCapitalize = autoCapitalize,
+            order = order,
             numberRow = numberRow,
             layers = layers,
         )

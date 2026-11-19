@@ -80,6 +80,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         state = KeyboardState(loadLayouts(), EmojiRepository(assets).load())
+        state.preferLanguage(resources.configuration.locales[0].language)
         SubtypeRegistrar.register(this, state.layouts)
         scope.launch { settingsRepository.settings.collect { state.settings = it } }
         scope.launch { settingsRepository.recentEmoji.collect { state.recentEmoji = it } }
