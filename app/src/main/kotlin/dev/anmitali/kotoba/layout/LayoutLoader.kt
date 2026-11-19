@@ -7,7 +7,12 @@ class LayoutSource(val origin: String, val text: String, val builtIn: Boolean)
 
 class LayoutFailure(val origin: String, val issues: List<LayoutIssue>)
 
-class LoadedLayouts(val layouts: List<KeyboardLayout>, val failures: List<LayoutFailure>)
+class LoadedLayouts(
+    val layouts: List<KeyboardLayout>,
+    val failures: List<LayoutFailure>,
+    val warnings: List<LayoutFailure>,
+    val sources: Map<String, LayoutSource>,
+)
 
 object LayoutLoader {
 
@@ -15,8 +20,10 @@ object LayoutLoader {
 
     fun load(sources: List<LayoutSource>): LoadedLayouts {
         val failures = ArrayList<LayoutFailure>()
+        val warnings = ArrayList<LayoutFailure>()
+        val loadedSources = HashMap<String, LayoutSource>()
         val parsed = ArrayList<Pair<LayoutSource, JSONObject>>()
-        for (source in sources.sortedWith(compareByDescending<LayoutSource> { it.builtIn }.thenBy { it.origin })) {
+        for (source in sources.sortedByDescending { it.builtIn }) {
             if (source.text.toByteArray().size > MaxFileBytes) {
                 failures += failure(source, "$", "file is larger than $MaxFileBytes bytes")
                 continue
@@ -58,8 +65,10 @@ object LayoutLoader {
                 continue
             }
             layouts += layout
+            loadedSources[layout.id] = source
+            if (result.issues.isNotEmpty()) warnings += LayoutFailure(source.origin, result.issues)
         }
-        return LoadedLayouts(layouts, failures)
+        return LoadedLayouts(layouts, failures, warnings, loadedSources)
     }
 
     private sealed interface Resolved {

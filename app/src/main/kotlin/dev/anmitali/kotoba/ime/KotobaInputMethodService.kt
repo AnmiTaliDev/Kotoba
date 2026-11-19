@@ -31,6 +31,7 @@ import dev.anmitali.kotoba.input.spaceEdit
 import dev.anmitali.kotoba.input.tapShift
 import dev.anmitali.kotoba.layout.KeyboardLayout
 import dev.anmitali.kotoba.layout.LayoutRepository
+import dev.anmitali.kotoba.layout.UserLayoutStore
 import dev.anmitali.kotoba.settings.SettingsActivity
 import dev.anmitali.kotoba.settings.SettingsRepository
 import dev.anmitali.kotoba.ui.keyboard.KeyboardActions
@@ -38,14 +39,17 @@ import dev.anmitali.kotoba.ui.keyboard.KeyboardPreviewArea
 import dev.anmitali.kotoba.ui.keyboard.KeyboardScreen
 import dev.anmitali.kotoba.ui.keyboard.KeyboardState
 import dev.anmitali.kotoba.ui.theme.KotobaTheme
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 private const val CONTEXT_CHARS = 16
 private const val TAG = "Kotoba"
+const val UserLayoutsDirectory = "layouts"
 
 class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner {
 
@@ -53,6 +57,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     private val savedStateController = SavedStateRegistryController.create(this)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val settingsRepository by lazy { SettingsRepository(this) }
+    private val layoutRepository by lazy { LayoutRepository(assets, UserLayoutStore(File(filesDir, UserLayoutsDirectory))) }
     private lateinit var state: KeyboardState
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
@@ -78,6 +83,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         SubtypeRegistrar.register(this, state.layouts)
         scope.launch { settingsRepository.settings.collect { state.settings = it } }
         scope.launch { settingsRepository.recentEmoji.collect { state.recentEmoji = it } }
+        scope.launch { settingsRepository.layoutsRevision.drop(1).collect { reloadLayouts() } }
     }
 
     override fun onDestroy() {
@@ -148,8 +154,14 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         return if (id > 0) resources.getDimensionPixelSize(id) else 0
     }
 
+    private fun reloadLayouts() {
+        val layouts = loadLayouts()
+        state.replaceLayouts(layouts)
+        SubtypeRegistrar.register(this, layouts)
+    }
+
     private fun loadLayouts(): List<KeyboardLayout> {
-        val loaded = LayoutRepository(assets).loadAll()
+        val loaded = layoutRepository.loadAll()
         for (failure in loaded.failures) {
             val details = failure.issues.joinToString("; ") { "${it.path}: ${it.message}" }
             Log.w(TAG, "Layout ${failure.origin} skipped: $details")

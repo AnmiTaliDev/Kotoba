@@ -17,6 +17,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 private val KeyCornerRadiusKey = intPreferencesKey("key_corner_radius_dp")
 private val NumberRowKey = booleanPreferencesKey("number_row")
 private val RecentEmojiKey = stringPreferencesKey("recent_emoji")
+private val LayoutsRevisionKey = intPreferencesKey("layouts_revision")
 private const val RecentSeparator = "\u001F"
 
 class SettingsRepository(context: Context) {
@@ -33,6 +34,12 @@ class SettingsRepository(context: Context) {
 
     val recentEmoji: Flow<List<String>> = store.data.map { prefs ->
         prefs[RecentEmojiKey]?.split(RecentSeparator)?.filter { it.isNotEmpty() } ?: emptyList()
+    }
+
+    val layoutsRevision: Flow<Int> = store.data.map { it[LayoutsRevisionKey] ?: 0 }
+
+    suspend fun bumpLayoutsRevision() {
+        store.edit { it[LayoutsRevisionKey] = (it[LayoutsRevisionKey] ?: 0) + 1 }
     }
 
     suspend fun recordEmoji(emoji: String) {
