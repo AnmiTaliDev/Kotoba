@@ -1,0 +1,20 @@
+[package]
+name = "kotoba-ffi"
+description = "UniFFI bindings of the Kotoba engine for Kotlin and other languages"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "kotoba_ffi"
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+kotoba-layout.workspace = true
+kotoba-input.workspace = true
+kotoba-emoji.workspace = true
+kotoba-data.workspace = true
+kotoba-session.workspace = true
+uniffi = "0.32"
