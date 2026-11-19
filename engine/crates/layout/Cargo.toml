@@ -1,0 +1,10 @@
+[package]
+name = "kotoba-layout"
+description = "Keyboard layout format: model, parser, validation, loading and import checks"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde_json.workspace = true
