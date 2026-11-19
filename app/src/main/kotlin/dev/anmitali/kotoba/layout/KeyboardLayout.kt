@@ -42,6 +42,7 @@ data class SpaceKey(override val weight: Float) : Key
 data class LayerKey(
     val label: String,
     val target: String,
+    val icon: String?,
     override val weight: Float,
 ) : Key
 

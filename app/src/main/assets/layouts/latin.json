@@ -27,7 +27,7 @@
         [
           {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.3},
           ",",
-          {"type": "layer", "label": "😊", "layer": "emoji"},
+          {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"},
           {"type": "space", "weight": 4.2},
           ".",
           {"type": "enter", "weight": 1.4}

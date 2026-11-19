@@ -3,14 +3,14 @@
   {
    "id": "recent",
    "name": "Recent",
-   "icon": "🕘",
+   "icon": "ic_emoji_recent",
    "recent": true,
    "emoji": []
   },
   {
    "id": "smileys",
    "name": "Smileys",
-   "icon": "😀",
+   "icon": "ic_emoji_smileys",
    "emoji": [
     "😀",
     "😁",
@@ -129,7 +129,7 @@
   {
    "id": "gestures",
    "name": "Gestures",
-   "icon": "👍",
+   "icon": "ic_emoji_gestures",
    "emoji": [
     "👆",
     "👇",
@@ -158,7 +158,7 @@
   {
    "id": "animals",
    "name": "Animals",
-   "icon": "🐶",
+   "icon": "ic_emoji_animals",
    "emoji": [
     "🐀",
     "🐁",
@@ -263,7 +263,7 @@
   {
    "id": "food",
    "name": "Food",
-   "icon": "🍔",
+   "icon": "ic_emoji_food",
    "emoji": [
     "🍅",
     "🍆",
@@ -354,7 +354,7 @@
   {
    "id": "activities",
    "name": "Activities",
-   "icon": "⚽",
+   "icon": "ic_emoji_activities",
    "emoji": [
     "🎃",
     "🎄",
@@ -423,7 +423,7 @@
   {
    "id": "travel",
    "name": "Travel",
-   "icon": "🚗",
+   "icon": "ic_emoji_travel",
    "emoji": [
     "🚀",
     "🚁",
@@ -500,7 +500,7 @@
   {
    "id": "objects",
    "name": "Objects",
-   "icon": "💡",
+   "icon": "ic_emoji_objects",
    "emoji": [
     "💡",
     "💢",
@@ -599,7 +599,7 @@
   {
    "id": "symbols",
    "name": "Symbols",
-   "icon": "❤️",
+   "icon": "ic_emoji_symbols",
    "emoji": [
     "❤️",
     "💓",

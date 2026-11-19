@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -114,7 +115,12 @@ fun EmojiPanel(
                         .clickable { state.emojiCategory = index }
                         .semantics { contentDescription = category.name },
                 ) {
-                    Text(text = category.icon, fontSize = 16.sp)
+                    Icon(
+                        painter = namedIconPainter(category.icon),
+                        contentDescription = null,
+                        tint = if (index == selected) colors.onSecondaryContainer else colors.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp),
+                    )
                 }
             }
             KeyButton(

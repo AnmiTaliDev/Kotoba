@@ -320,11 +320,20 @@ private fun RowScope.KeyCell(
             cornerRadius = cornerRadius,
             onTap = { actions.onLayer(key.target) },
         ) {
-            Text(
-                text = key.label,
-                style = MaterialTheme.typography.labelLarge,
-                color = colors.onSecondaryContainer,
-            )
+            val iconName = key.icon
+            if (iconName != null) {
+                Icon(
+                    painter = namedIconPainter(iconName),
+                    contentDescription = null,
+                    tint = colors.onSecondaryContainer,
+                )
+            } else {
+                Text(
+                    text = key.label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.onSecondaryContainer,
+                )
+            }
         }
 
         is SpacerKey -> Spacer(Modifier.weight(key.weight))

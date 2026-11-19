@@ -51,7 +51,7 @@ object LayoutParser {
             "emoji" -> LayerKind.Emoji
             else -> error("Unknown layer kind: $name")
         }
-        val back = json.optJSONObject("back")?.let { LayerKey(it.getString("label"), it.getString("layer"), 1f) }
+        val back = json.optJSONObject("back")?.let { LayerKey(it.getString("label"), it.getString("layer"), null, 1f) }
         require(kind != LayerKind.Emoji || back != null) { "Emoji layer requires back" }
         return Layer(
             kind = kind,
@@ -82,7 +82,7 @@ object LayoutParser {
             "delete" -> DeleteKey(weight)
             "enter" -> EnterKey(weight)
             "space" -> SpaceKey(weight)
-            "layer" -> LayerKey(json.getString("label"), json.getString("layer"), weight)
+            "layer" -> LayerKey(json.getString("label"), json.getString("layer"), json.optString("icon").ifEmpty { null }, weight)
             "spacer" -> SpacerKey(weight)
             else -> error("Unknown key type: $type")
         }
