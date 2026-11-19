@@ -1,0 +1,15 @@
+[package]
+name = "kotoba-cli"
+description = "Command line tool for Kotoba keyboard layouts: validate, list and export"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "kotoba-cli"
+path = "src/main.rs"
+
+[dependencies]
+kotoba-layout.workspace = true
+kotoba-data.workspace = true
