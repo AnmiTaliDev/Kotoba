@@ -32,4 +32,21 @@
     <string name="number_row_title">Number row</string>
     <string name="number_row_body">Show digits above the letter rows.</string>
     <string name="emoji_recent_empty">No recent emoji yet</string>
+    <string name="back">Back</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="layouts_nav_title">Keyboard layouts</string>
+    <string name="layouts_nav_body">Import, export and remove layouts</string>
+    <string name="layouts_title">Keyboard layouts</string>
+    <string name="layouts_import">Import layout</string>
+    <string name="layouts_enable">Enable layouts</string>
+    <string name="layouts_user">Imported</string>
+    <string name="layouts_builtin">Built in</string>
+    <string name="layouts_skipped">Skipped</string>
+    <string name="layout_export">Export</string>
+    <string name="layout_delete">Delete</string>
+    <string name="layout_imported">Imported %1$s</string>
+    <string name="layout_rejected_title">Layout rejected</string>
+    <string name="layout_delete_title">Delete layout?</string>
+    <string name="layout_delete_body">%1$s will be removed.</string>
 </resources>

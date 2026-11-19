@@ -18,6 +18,12 @@
         </activity>
 
         <activity
+            android:name=".settings.LayoutsActivity"
+            android:exported="false"
+            android:label="@string/layouts_title"
+            android:theme="@style/Theme.Kotoba" />
+
+        <activity
             android:name=".settings.SettingsActivity"
             android:exported="true"
             android:label="@string/app_name"
