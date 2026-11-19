@@ -4,12 +4,14 @@ import android.content.res.AssetManager
 
 class LayoutRepository(private val assets: AssetManager) {
 
-    fun loadAll(): List<KeyboardLayout> =
+    fun loadAll(): LoadedLayouts = LayoutLoader.load(builtInSources())
+
+    private fun builtInSources(): List<LayoutSource> =
         assets.list(DIRECTORY).orEmpty()
             .filter { it.endsWith(".json") }
-            .sorted()
             .map { file ->
-                assets.open("$DIRECTORY/$file").bufferedReader().use { LayoutParser.parse(it.readText()) }
+                val text = assets.open("$DIRECTORY/$file").bufferedReader().use { it.readText() }
+                LayoutSource(origin = "$DIRECTORY/$file", text = text, builtIn = true)
             }
 
     private companion object {

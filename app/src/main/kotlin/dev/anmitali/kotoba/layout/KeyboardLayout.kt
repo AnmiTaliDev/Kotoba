@@ -7,6 +7,7 @@ data class KeyboardLayout(
     val defaultLayer: String,
     val sentenceEnd: String,
     val doubleSpace: String,
+    val autoCapitalize: Boolean,
     val numberRow: List<Key>,
     val layers: Map<String, Layer>,
 )

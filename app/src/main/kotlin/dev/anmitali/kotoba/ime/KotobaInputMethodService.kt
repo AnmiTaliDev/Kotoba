@@ -4,6 +4,7 @@ import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.os.SystemClock
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
@@ -28,6 +29,7 @@ import dev.anmitali.kotoba.input.enterActionOf
 import dev.anmitali.kotoba.input.shiftAfterEdit
 import dev.anmitali.kotoba.input.spaceEdit
 import dev.anmitali.kotoba.input.tapShift
+import dev.anmitali.kotoba.layout.KeyboardLayout
 import dev.anmitali.kotoba.layout.LayoutRepository
 import dev.anmitali.kotoba.settings.SettingsActivity
 import dev.anmitali.kotoba.settings.SettingsRepository
@@ -43,6 +45,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 private const val CONTEXT_CHARS = 16
+private const val TAG = "Kotoba"
 
 class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner {
 
@@ -71,7 +74,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performAttach()
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
-        state = KeyboardState(LayoutRepository(assets).loadAll(), EmojiRepository(assets).load())
+        state = KeyboardState(loadLayouts(), EmojiRepository(assets).load())
         SubtypeRegistrar.register(this, state.layouts)
         scope.launch { settingsRepository.settings.collect { state.settings = it } }
         scope.launch { settingsRepository.recentEmoji.collect { state.recentEmoji = it } }
@@ -145,6 +148,16 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         return if (id > 0) resources.getDimensionPixelSize(id) else 0
     }
 
+    private fun loadLayouts(): List<KeyboardLayout> {
+        val loaded = LayoutRepository(assets).loadAll()
+        for (failure in loaded.failures) {
+            val details = failure.issues.joinToString("; ") { "${it.path}: ${it.message}" }
+            Log.w(TAG, "Layout ${failure.origin} skipped: $details")
+        }
+        check(loaded.layouts.isNotEmpty()) { "No valid keyboard layouts" }
+        return loaded.layouts
+    }
+
     private fun openSettings() {
         state.toolsOpen = false
         val intent = Intent(this, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -201,7 +214,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
 
     private fun refreshShift() {
         val ic = currentInputConnection ?: return
-        val autoCapitalize = allowsAutoCapitalize(currentInputEditorInfo.inputType)
+        val autoCapitalize = state.layout.autoCapitalize && allowsAutoCapitalize(currentInputEditorInfo.inputType)
         val before = if (autoCapitalize) ic.getTextBeforeCursor(CONTEXT_CHARS, 0) ?: "" else ""
         state.shift = shiftAfterEdit(
             current = state.shift,
