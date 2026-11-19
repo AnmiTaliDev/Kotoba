@@ -28,7 +28,7 @@ class SettingsRepository(context: Context) {
         KeyboardSettings(
             keyCornerRadiusDp = (prefs[KeyCornerRadiusKey] ?: KeyboardSettings.DefaultKeyCornerRadiusDp)
                 .coerceIn(KeyboardSettings.MinKeyCornerRadiusDp, KeyboardSettings.MaxKeyCornerRadiusDp),
-            numberRow = prefs[NumberRowKey] ?: false,
+            numberRow = prefs[NumberRowKey] ?: KeyboardSettings.DefaultNumberRow,
         )
     }
 
