@@ -47,6 +47,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateController = SavedStateRegistryController.create(this)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val settingsRepository by lazy { SettingsRepository(this) }
     private lateinit var state: KeyboardState
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
@@ -54,6 +55,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
 
     private val actions = KeyboardActions(
         onChar = ::commit,
+        onEmoji = ::commitEmoji,
         onShift = ::tapShiftKey,
         onDelete = ::deleteBackward,
         onEnter = ::enter,
@@ -68,9 +70,8 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         state = KeyboardState(LayoutRepository(assets).loadAll(), EmojiRepository(assets).load())
-        scope.launch {
-            SettingsRepository(this@KotobaInputMethodService).settings.collect { state.settings = it }
-        }
+        scope.launch { settingsRepository.settings.collect { state.settings = it } }
+        scope.launch { settingsRepository.recentEmoji.collect { state.recentEmoji = it } }
     }
 
     override fun onDestroy() {
@@ -108,6 +109,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
             state.layerId = state.layout.defaultLayer
             state.shift = ShiftState.Off
             state.toolsOpen = false
+            state.resetEmojiCategory()
         }
         state.enterAction = enterActionOf(info.imeOptions)
         updateNavigationBarHeight()
@@ -134,6 +136,11 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         state.toolsOpen = false
         val intent = Intent(this, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
+    }
+
+    private fun commitEmoji(emoji: String) {
+        commit(emoji)
+        scope.launch { settingsRepository.recordEmoji(emoji) }
     }
 
     private fun commit(text: String) {

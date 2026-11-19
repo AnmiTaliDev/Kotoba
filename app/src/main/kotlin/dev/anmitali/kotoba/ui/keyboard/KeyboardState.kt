@@ -18,6 +18,7 @@ class KeyboardState(
     val emojiCategories: List<EmojiCategory>,
 ) {
     var emojiCategory by mutableIntStateOf(0)
+    var recentEmoji by mutableStateOf<List<String>>(emptyList())
     var layoutIndex by mutableIntStateOf(0)
     var layerId by mutableStateOf(layouts[0].defaultLayer)
     var shift by mutableStateOf(ShiftState.Off)
@@ -29,4 +30,9 @@ class KeyboardState(
     var lastShiftTapAt = 0L
 
     val layout: KeyboardLayout get() = layouts[layoutIndex]
+
+    fun resetEmojiCategory() {
+        val firstFilled = emojiCategories.indexOfFirst { !it.recent }.coerceAtLeast(0)
+        emojiCategory = if (recentEmoji.isNotEmpty()) emojiCategories.indexOfFirst { it.recent }.coerceAtLeast(0) else firstFilled
+    }
 }

@@ -48,8 +48,21 @@ fun EmojiPanel(
     val colors = MaterialTheme.colorScheme
     val categories = state.emojiCategories
     val selected = state.emojiCategory.coerceIn(0, categories.lastIndex)
+    val category = categories[selected]
+    val shown = if (category.recent) state.recentEmoji else category.emoji
     Column(modifier = Modifier.fillMaxWidth().height(height)) {
-        key(selected) {
+        if (shown.isEmpty()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(R.string.emoji_recent_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                )
+            }
+        } else key(selected) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(EmojiCellSize),
                 state = rememberLazyGridState(),
@@ -58,13 +71,13 @@ fun EmojiPanel(
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp),
             ) {
-                items(categories[selected].emoji) { emoji ->
+                items(shown) { emoji ->
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .height(EmojiCellSize)
                             .clip(RoundedCornerShape(TabCorner))
-                            .clickable { actions.onChar(emoji) },
+                            .clickable { actions.onEmoji(emoji) },
                     ) {
                         Text(text = emoji, fontSize = 26.sp)
                     }
@@ -101,7 +114,7 @@ fun EmojiPanel(
                         .clickable { state.emojiCategory = index }
                         .semantics { contentDescription = category.name },
                 ) {
-                    Text(text = category.icon, fontSize = 18.sp)
+                    Text(text = category.icon, fontSize = 16.sp)
                 }
             }
             KeyButton(

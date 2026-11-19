@@ -63,6 +63,7 @@ import dev.anmitali.kotoba.layout.SpacerKey
 
 data class KeyboardActions(
     val onChar: (String) -> Unit,
+    val onEmoji: (String) -> Unit,
     val onShift: () -> Unit,
     val onDelete: () -> Unit,
     val onEnter: () -> Unit,
