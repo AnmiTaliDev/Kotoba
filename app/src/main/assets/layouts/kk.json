@@ -1,6 +1,6 @@
 {
   "id": "kk",
-  "name": "Қазақша",
+  "name": "Қазақша (толық)",
   "locale": "kk",
   "order": 40,
   "extends": "latin",

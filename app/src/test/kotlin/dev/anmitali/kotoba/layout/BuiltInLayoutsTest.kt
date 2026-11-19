@@ -15,6 +15,7 @@ class BuiltInLayoutsTest {
         "uk" to "абвгґдеєжзиіїйклмнопрстуфхцчшщьюяʼ",
         "be" to "абвгдеёжзійклмнопрстуўфхцчшыьэюя'",
         "kk" to "абвгғдеёжзийкқлмнңоөпрстуұүфхһцчшщъыіьэюяә",
+        "kk-compact" to "абвгғдеёжзийкқлмнңоөпрстуұүфхһцчшщъыіьэюяә",
         "de" to "abcdefghijklmnopqrstuvwxyzäöüß",
     )
 
@@ -88,7 +89,7 @@ class BuiltInLayoutsTest {
     @Test
     fun cyrillicLayoutsContainNoLatinLookalikes() {
         val layouts = load().layouts.associateBy { it.id }
-        for (id in listOf("ru", "uk", "be", "kk")) {
+        for (id in listOf("ru", "uk", "be", "kk", "kk-compact")) {
             val layout = layouts.getValue(id)
             val keys = layout.layers.getValue(layout.defaultLayer).rows.flatten().filterIsInstance<CharKey>()
             val letters = keys.flatMap { listOf(it.label) + it.hold }.flatMap { it.toList() }
@@ -96,5 +97,14 @@ class BuiltInLayoutsTest {
             val foreign = letters.filter { it.code !in 0x0400..0x052F }
             assertTrue("$id contains non-Cyrillic letters: $foreign", foreign.isEmpty())
         }
+    }
+
+    @Test
+    fun compactKazakhLayoutKeepsFourRowsAndUsesLongPress() {
+        val layout = load().layouts.single { it.id == "kk-compact" }
+        val rows = layout.layers.getValue("letters").rows
+        assertEquals(4, rows.size)
+        val plain = rows.flatten().filterIsInstance<CharKey>().map { it.label }.toSet()
+        for (letter in "әғқңөүұһі") assertTrue("$letter must not be a plain key", letter.toString() !in plain)
     }
 }
