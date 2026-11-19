@@ -1,0 +1,19 @@
+{
+  "id": "kk-latn-2021",
+  "name": "Казахский лат. 2021",
+  "locale": "kk-Latn",
+  "order": 45,
+  "extends": "latin",
+  "layers": {
+    "letters": {
+      "shiftable": true,
+      "numberRow": true,
+      "rows": [
+        ["q", "e", "r", "t", "y", "u", "ū", {"label": "ı", "shifted": "I"}, "o", "p", "ğ", "ü"],
+        ["a", "ä", "s", "d", "f", "g", "h", "j", "k", "l", "ş", {"label": "i", "shifted": "İ"}],
+        [{"type": "shift", "weight": 1.5}, "z", "v", "b", "n", "ñ", "m", "ö", {"type": "delete", "weight": 1.5}],
+        [{"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.3}, ",", {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"}, {"type": "space", "weight": 4.2}, ".", {"type": "enter", "weight": 1.4}]
+      ]
+    }
+  }
+}

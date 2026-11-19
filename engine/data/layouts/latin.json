@@ -1,0 +1,82 @@
+{
+  "id": "latin",
+  "name": "English",
+  "locale": "en",
+  "order": 0,
+  "defaultLayer": "letters",
+  "punctuation": {
+    "sentenceEnd": ".!?",
+    "doubleSpace": "."
+  },
+  "numberRow": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+  "layers": {
+    "letters": {
+      "shiftable": true,
+      "numberRow": true,
+      "rows": [
+        ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+        [
+          {"type": "spacer", "weight": 0.5},
+          "a", "s", "d", "f", "g", "h", "j", "k", "l",
+          {"type": "spacer", "weight": 0.5}
+        ],
+        [
+          {"type": "shift", "weight": 1.5},
+          "z", "x", "c", "v", "b", "n", "m",
+          {"type": "delete", "weight": 1.5}
+        ],
+        [
+          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.3},
+          ",",
+          {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"},
+          {"type": "space", "weight": 4.2},
+          ".",
+          {"type": "enter", "weight": 1.4}
+        ]
+      ]
+    },
+    "emoji": {
+      "kind": "emoji",
+      "shiftable": false,
+      "back": {"label": "ABC", "layer": "letters"}
+    },
+    "symbols": {
+      "shiftable": false,
+      "rows": [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+        ["@", "#", "$", "_", "&", "-", "+", "(", ")", "/"],
+        [
+          {"type": "layer", "label": "=\\<", "layer": "symbols2", "weight": 1.5},
+          "*", "\"", "'", ":", ";", "!", "?",
+          {"type": "delete", "weight": 1.5}
+        ],
+        [
+          {"type": "layer", "label": "ABC", "layer": "letters", "weight": 1.4},
+          ",",
+          {"type": "space", "weight": 5},
+          ".",
+          {"type": "enter", "weight": 1.5}
+        ]
+      ]
+    },
+    "symbols2": {
+      "shiftable": false,
+      "rows": [
+        ["~", "`", "|", "•", "√", "π", "÷", "×", "¶", "∆"],
+        ["£", "¢", "€", "¥", "^", "°", "=", "{", "}", "\\"],
+        [
+          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.5},
+          "%", "©", "®", "™", "✓", "[", "]",
+          {"type": "delete", "weight": 1.5}
+        ],
+        [
+          {"type": "layer", "label": "ABC", "layer": "letters", "weight": 1.4},
+          ",",
+          {"type": "space", "weight": 5},
+          ".",
+          {"type": "enter", "weight": 1.5}
+        ]
+      ]
+    }
+  }
+}
