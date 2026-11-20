@@ -70,7 +70,7 @@
         {
           "type": "object",
           "properties": {
-            "type": { "enum": ["char", "shift", "delete", "enter", "space", "spacer", "layer"] },
+            "type": { "enum": ["char", "shift", "delete", "enter", "space", "spacer", "layer", "language"] },
             "weight": { "$ref": "#/$defs/weight" },
             "label": { "type": "string" },
             "shifted": { "$ref": "#/$defs/label" },
@@ -83,6 +83,10 @@
             {
               "if": { "properties": { "type": { "const": "layer" } }, "required": ["type"] },
               "then": { "required": ["label", "layer"] }
+            },
+            {
+              "if": { "properties": { "type": { "const": "language" } }, "required": ["type"] },
+              "then": { "required": ["label"] }
             },
             {
               "if": { "not": { "required": ["type"] } },

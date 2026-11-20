@@ -103,6 +103,7 @@ An object has a `type` and an optional `weight`. Weight is the relative width, d
 | `enter` | | Enter or the editor action. |
 | `space` | | Space bar. |
 | `spacer` | | Empty gap. |
+| `language` | `label`, optional `icon` | Switches to the next enabled layout. Shown only when more than one layout is enabled on the device. `label` is the description, or the text when the icon is unknown. |
 | `layer` | `label`, `layer`, optional `icon` | Switches to layer `layer`. `label` is shown, or used as the description when an icon is present. `icon` names a built-in icon and falls back to the label if unknown. |
 
 Use `shifted` when the upper case differs from the language default, for example `{ "label": "ß", "shifted": "ẞ" }`.
