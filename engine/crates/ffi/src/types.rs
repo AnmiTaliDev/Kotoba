@@ -55,6 +55,7 @@ pub enum LayerKind {
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct Layer {
     pub id: String,
+    pub label: Option<String>,
     pub kind: LayerKind,
     pub shiftable: bool,
     pub number_row: bool,

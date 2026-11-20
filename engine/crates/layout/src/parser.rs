@@ -133,6 +133,7 @@ fn build(root: &Map<String, Value>, r: &mut Reader) -> Option<KeyboardLayout> {
             r.error("$.defaultLayer", format!("unknown layer: {default_layer}"));
         }
     }
+    resolve_labels(&mut layers, r);
     let known = |target: &str| layers.iter().any(|layer| layer.id == target);
     for layer in &layers {
         if let Some(back) = &layer.back {
@@ -186,6 +187,52 @@ fn build(root: &Map<String, Value>, r: &mut Reader) -> Option<KeyboardLayout> {
     })
 }
 
+fn resolve_labels(layers: &mut [Layer], r: &mut Reader) {
+    let names: std::collections::HashMap<String, String> = layers
+        .iter()
+        .filter_map(|layer| {
+            layer
+                .label
+                .clone()
+                .filter(|label| !label.is_empty())
+                .map(|label| (layer.id.clone(), label))
+        })
+        .collect();
+    let ids: std::collections::HashSet<String> =
+        layers.iter().map(|layer| layer.id.clone()).collect();
+    for layer in layers.iter_mut() {
+        let layer_id = layer.id.clone();
+        if let Some(back) = &mut layer.back {
+            if back.label.is_empty() {
+                match names.get(&back.target) {
+                    Some(name) => back.label = name.clone(),
+                    None if ids.contains(&back.target) => r.error(
+                        format!("$.layers.{layer_id}.back.label"),
+                        "is required unless the target layer has a label",
+                    ),
+                    None => {}
+                }
+            }
+        }
+        for (row_index, row) in layer.rows.iter_mut().enumerate() {
+            for (key_index, key) in row.iter_mut().enumerate() {
+                let Key::Layer(link) = key else { continue };
+                if !link.label.is_empty() {
+                    continue;
+                }
+                match names.get(&link.target) {
+                    Some(name) => link.label = name.clone(),
+                    None if ids.contains(&link.target) => r.error(
+                        format!("$.layers.{layer_id}.rows[{row_index}][{key_index}].label"),
+                        "is required unless the target layer has a label",
+                    ),
+                    None => {}
+                }
+            }
+        }
+    }
+}
+
 fn read_layer(
     id: &str,
     json: &Map<String, Value>,
@@ -234,13 +281,22 @@ fn read_layer(
     }
     let back = r.opt_object(json, "back", path).and_then(|back| {
         let back_path = format!("{path}.back");
-        let label = r.string(back, "label", &back_path);
+        let label = r.opt_string(back, "label", &back_path).unwrap_or_default();
         let target = r.string(back, "layer", &back_path);
         Some(LayerLink {
-            label: label?,
+            label,
             target: target?,
         })
     });
+    let label = r.opt_string(json, "label", path);
+    if let Some(label) = &label {
+        if label.chars().count() > MAX_LABEL_LENGTH {
+            r.error(
+                format!("{path}.label"),
+                format!("is longer than {MAX_LABEL_LENGTH} characters"),
+            );
+        }
+    }
     if kind == LayerKind::Keys && rows.is_empty() {
         r.error(format!("{path}.rows"), "must contain at least one row");
     }
@@ -249,6 +305,7 @@ fn read_layer(
     }
     Some(Layer {
         id: id.to_string(),
+        label,
         kind,
         shiftable: r.opt_bool(json, "shiftable", path).unwrap_or(false),
         number_row: r.opt_bool(json, "numberRow", path).unwrap_or(false),
@@ -306,7 +363,7 @@ fn read_key(raw: &Value, path: &str, lang: Option<&str>, r: &mut Reader) -> Opti
         "space" => Some(Key::Space { weight }),
         "spacer" => Some(Key::Spacer { weight }),
         "layer" => {
-            let label = r.string(object, "label", path)?;
+            let label = r.opt_string(object, "label", path).unwrap_or_default();
             let target = r.string(object, "layer", path)?;
             let icon = r
                 .opt_string(object, "icon", path)

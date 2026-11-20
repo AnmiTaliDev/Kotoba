@@ -219,3 +219,28 @@ fn loaded_layouts_remember_their_source() {
     assert_eq!(loaded.sources["test"].origin, "a.json");
     assert!(loaded.sources["test"].built_in);
 }
+
+#[test]
+fn inherited_layers_pick_up_the_label_of_an_overridden_layer() {
+    let mut base = minimal();
+    base["layers"]["letters"]["label"] = json!("ABC");
+    base["layers"]["symbols"] = json!({
+        "label": "?123",
+        "rows": [[{"type": "layer", "layer": "letters"}, {"type": "space"}]]
+    });
+    let extra = json!({"layers": {"letters": {"label": "АБВ", "rows": [["б"], [{"type": "space"}, {"type": "delete"}]]}}});
+    let loaded = load(&[
+        built_in("base.json", &base.to_string()),
+        user("child.json", &child(extra)),
+    ]);
+    let layout = loaded.layouts.iter().find(|l| l.id == "child").unwrap();
+    let Key::Layer(link) = &layout.layer("symbols").unwrap().rows[0][0] else {
+        panic!()
+    };
+    assert_eq!(link.label, "АБВ");
+    let base_layout = loaded.layouts.iter().find(|l| l.id == "test").unwrap();
+    let Key::Layer(base_link) = &base_layout.layer("symbols").unwrap().rows[0][0] else {
+        panic!()
+    };
+    assert_eq!(base_link.label, "ABC");
+}

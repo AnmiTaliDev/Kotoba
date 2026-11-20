@@ -347,3 +347,72 @@ fn language_key_needs_a_label() {
         "$.layers.letters.rows[0][0].label",
     );
 }
+
+fn with_labelled_layers(key: Value) -> Value {
+    let mut value = with_first_row(minimal(), json!([key]));
+    value["layers"]["symbols"] =
+        json!({"label": "?123", "shiftable": false, "rows": [[{"type": "space"}]]});
+    value
+}
+
+fn first_layer_key_label(value: &Value) -> String {
+    let result = parse_value(value);
+    let layout = result
+        .layout
+        .unwrap_or_else(|| panic!("layout failed: {:?}", result.issues));
+    match &layout.layer("letters").unwrap().rows[0][0] {
+        Key::Layer(key) => key.label.clone(),
+        other => panic!("not a layer key: {other:?}"),
+    }
+}
+
+#[test]
+fn layer_key_takes_its_label_from_the_target_layer() {
+    let value = with_labelled_layers(json!({"type": "layer", "layer": "symbols"}));
+    assert_eq!(first_layer_key_label(&value), "?123");
+}
+
+#[test]
+fn explicit_layer_key_label_wins() {
+    let value = with_labelled_layers(json!({"type": "layer", "layer": "symbols", "label": "123"}));
+    assert_eq!(first_layer_key_label(&value), "123");
+}
+
+#[test]
+fn empty_layer_key_label_counts_as_missing() {
+    let value = with_labelled_layers(json!({"type": "layer", "layer": "symbols", "label": ""}));
+    assert_eq!(first_layer_key_label(&value), "?123");
+}
+
+#[test]
+fn layer_key_without_any_label_is_an_error() {
+    let mut value = with_first_row(minimal(), json!([{"type": "layer", "layer": "symbols"}]));
+    value["layers"]["symbols"] = json!({"rows": [[{"type": "space"}]]});
+    assert_error(&value, "$.layers.letters.rows[0][0].label");
+}
+
+#[test]
+fn emoji_back_takes_its_label_from_the_target_layer() {
+    let mut value = minimal();
+    value["layers"]["letters"]["label"] = json!("ABC");
+    value["layers"]["emoji"] = json!({"kind": "emoji", "back": {"layer": "letters"}});
+    let layout = parse_value(&value).layout.unwrap();
+    assert_eq!(
+        layout.layer("emoji").unwrap().back.as_ref().unwrap().label,
+        "ABC"
+    );
+}
+
+#[test]
+fn emoji_back_without_any_label_is_an_error() {
+    let mut value = minimal();
+    value["layers"]["emoji"] = json!({"kind": "emoji", "back": {"layer": "letters"}});
+    assert_error(&value, "$.layers.emoji.back.label");
+}
+
+#[test]
+fn rejects_a_long_layer_label() {
+    let mut value = minimal();
+    value["layers"]["letters"]["label"] = json!("123456789");
+    assert_error(&value, "$.layers.letters.label");
+}

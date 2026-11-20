@@ -77,6 +77,7 @@ impl From<&layout::Layer> for Layer {
     fn from(layer: &layout::Layer) -> Self {
         Self {
             id: layer.id.clone(),
+            label: layer.label.clone(),
             kind: match layer.kind {
                 layout::LayerKind::Keys => LayerKind::Keys,
                 layout::LayerKind::Emoji => LayerKind::Emoji,
