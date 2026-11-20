@@ -344,3 +344,43 @@ fn every_built_in_layout_has_a_language_key_on_its_letters_layer() {
         assert!(has, "{} has no language key", layout.id);
     }
 }
+
+#[test]
+fn back_to_letters_keys_use_the_script_of_the_layout() {
+    let layouts = layouts();
+    let expected = [
+        ("latin", "ABC"),
+        ("ru", "АБВ"),
+        ("uk", "АБВ"),
+        ("be", "АБВ"),
+        ("kk", "АБВ"),
+        ("kk-compact", "АБВ"),
+        ("kk-anmitalidev", "АБВ"),
+        ("kk-latn-2021", "ABC"),
+        ("de", "ABC"),
+        ("tr-q", "ABC"),
+    ];
+    for (id, label) in expected {
+        let layout = &layouts[id];
+        let Key::Layer(link) = &layout.layer("symbols").unwrap().rows[3][0] else {
+            panic!("{id}")
+        };
+        assert_eq!(link.label, label, "{id}: symbols");
+        let back = layout.layer("emoji").unwrap().back.as_ref().unwrap();
+        assert_eq!(back.label, label, "{id}: emoji");
+    }
+}
+
+#[test]
+fn symbols_layers_keep_their_own_labels_in_every_layout() {
+    for layout in loaded().layouts {
+        let Key::Layer(to_symbols) = &layout.layer("symbols2").unwrap().rows[2][0] else {
+            panic!()
+        };
+        assert_eq!(to_symbols.label, "?123", "{}", layout.id);
+        let Key::Layer(to_more) = &layout.layer("symbols").unwrap().rows[2][0] else {
+            panic!()
+        };
+        assert_eq!(to_more.label, "=\\<", "{}", layout.id);
+    }
+}

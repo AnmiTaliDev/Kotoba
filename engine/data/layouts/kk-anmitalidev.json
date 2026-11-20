@@ -6,13 +6,14 @@
   "extends": "latin",
   "layers": {
     "letters": {
+      "label": "АБВ",
       "shiftable": true,
       "numberRow": true,
       "rows": [
         ["й", "у", "ү", "ұ", "к", "қ", "е", "н", "ң", "г", "ғ", "ш"],
         ["ы", "і", "а", "ә", "п", "р", "о", "ө", "л", "д", "ж"],
         [{"type": "shift", "weight": 1.5}, "з", "х", "һ", "с", "м", "и", "т", "б", {"type": "delete", "weight": 1.5}],
-        [{"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.2}, {"type": "language", "label": "Language", "icon": "ic_key_language"}, ",", {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"}, {"type": "space", "weight": 3.6}, ".", {"type": "enter", "weight": 1.3}]
+        [{"type": "layer", "layer": "symbols", "weight": 1.2}, {"type": "language", "label": "Language", "icon": "ic_key_language"}, ",", {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"}, {"type": "space", "weight": 3.6}, ".", {"type": "enter", "weight": 1.3}]
       ]
     }
   }

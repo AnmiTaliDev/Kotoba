@@ -11,6 +11,7 @@
   "numberRow": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
   "layers": {
     "letters": {
+      "label": "ABC",
       "shiftable": true,
       "numberRow": true,
       "rows": [
@@ -26,7 +27,7 @@
           {"type": "delete", "weight": 1.5}
         ],
         [
-          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.2},
+          {"type": "layer", "layer": "symbols", "weight": 1.2},
           {"type": "language", "label": "Language", "icon": "ic_key_language"},
           ",",
           {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"},
@@ -39,20 +40,21 @@
     "emoji": {
       "kind": "emoji",
       "shiftable": false,
-      "back": {"label": "ABC", "layer": "letters"}
+      "back": {"layer": "letters"}
     },
     "symbols": {
+      "label": "?123",
       "shiftable": false,
       "rows": [
         ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
         ["@", "#", "$", "_", "&", "-", "+", "(", ")", "/"],
         [
-          {"type": "layer", "label": "=\\<", "layer": "symbols2", "weight": 1.5},
+          {"type": "layer", "layer": "symbols2", "weight": 1.5},
           "*", "\"", "'", ":", ";", "!", "?",
           {"type": "delete", "weight": 1.5}
         ],
         [
-          {"type": "layer", "label": "ABC", "layer": "letters", "weight": 1.4},
+          {"type": "layer", "layer": "letters", "weight": 1.4},
           ",",
           {"type": "space", "weight": 5},
           ".",
@@ -61,17 +63,18 @@
       ]
     },
     "symbols2": {
+      "label": "=\\<",
       "shiftable": false,
       "rows": [
         ["~", "`", "|", "•", "√", "π", "÷", "×", "¶", "∆"],
         ["£", "¢", "€", "¥", "^", "°", "=", "{", "}", "\\"],
         [
-          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.5},
+          {"type": "layer", "layer": "symbols", "weight": 1.5},
           "%", "©", "®", "™", "✓", "[", "]",
           {"type": "delete", "weight": 1.5}
         ],
         [
-          {"type": "layer", "label": "ABC", "layer": "letters", "weight": 1.4},
+          {"type": "layer", "layer": "letters", "weight": 1.4},
           ",",
           {"type": "space", "weight": 5},
           ".",
