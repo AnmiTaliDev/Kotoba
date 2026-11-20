@@ -3,7 +3,9 @@ use serde_json::{Map, Value};
 use crate::case::to_upper;
 use crate::issue::{LayoutIssue, Severity};
 use crate::locale::parse_language_tag;
-use crate::model::{CharKey, Key, KeyboardLayout, Layer, LayerKey, LayerKind, LayerLink};
+use crate::model::{
+    CharKey, Key, KeyboardLayout, LanguageKey, Layer, LayerKey, LayerKind, LayerLink,
+};
 
 pub const SUPPORTED_FORMAT_VERSION: i64 = 1;
 pub const MAX_KEYS: usize = 200;
@@ -312,6 +314,17 @@ fn read_key(raw: &Value, path: &str, lang: Option<&str>, r: &mut Reader) -> Opti
             Some(Key::Layer(LayerKey {
                 label,
                 target,
+                icon,
+                weight,
+            }))
+        }
+        "language" => {
+            let label = r.string(object, "label", path)?;
+            let icon = r
+                .opt_string(object, "icon", path)
+                .filter(|icon| !icon.is_empty());
+            Some(Key::Language(LanguageKey {
+                label,
                 icon,
                 weight,
             }))

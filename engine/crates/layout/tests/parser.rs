@@ -311,3 +311,39 @@ fn counts_labels_in_characters_not_bytes() {
         "$.layers.letters.rows[0][0]",
     );
 }
+
+#[test]
+fn reads_language_key() {
+    let value = with_first_row(
+        minimal(),
+        json!([{"type": "language", "label": "Language", "icon": "ic_key_language", "weight": 1.5}]),
+    );
+    let layout = parse_value(&value).layout.unwrap();
+    let Key::Language(key) = &layout.layer("letters").unwrap().rows[0][0] else {
+        panic!()
+    };
+    assert_eq!(key.label, "Language");
+    assert_eq!(key.icon.as_deref(), Some("ic_key_language"));
+    assert_eq!(key.weight, 1.5);
+}
+
+#[test]
+fn language_key_icon_is_optional() {
+    let value = with_first_row(
+        minimal(),
+        json!([{"type": "language", "label": "Language"}]),
+    );
+    let layout = parse_value(&value).layout.unwrap();
+    let Key::Language(key) = &layout.layer("letters").unwrap().rows[0][0] else {
+        panic!()
+    };
+    assert_eq!(key.icon, None);
+}
+
+#[test]
+fn language_key_needs_a_label() {
+    assert_error(
+        &with_first_row(minimal(), json!([{"type": "language"}])),
+        "$.layers.letters.rows[0][0].label",
+    );
+}

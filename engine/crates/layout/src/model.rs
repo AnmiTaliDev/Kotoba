@@ -60,6 +60,7 @@ pub enum Key {
     Space { weight: f32 },
     Spacer { weight: f32 },
     Layer(LayerKey),
+    Language(LanguageKey),
 }
 
 impl Key {
@@ -67,6 +68,7 @@ impl Key {
         match self {
             Key::Char(key) => key.weight,
             Key::Layer(key) => key.weight,
+            Key::Language(key) => key.weight,
             Key::Shift { weight }
             | Key::Delete { weight }
             | Key::Enter { weight }
@@ -103,6 +105,13 @@ impl CharKey {
 pub struct LayerKey {
     pub label: String,
     pub target: String,
+    pub icon: Option<String>,
+    pub weight: f32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct LanguageKey {
+    pub label: String,
     pub icon: Option<String>,
     pub weight: f32,
 }
