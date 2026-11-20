@@ -16,6 +16,7 @@ License: GPL-3.0-only.
 | `kotoba-cli` | `kotoba-cli validate`, `list`, `export`. |
 | `kotoba-ffi` | UniFFI bindings (Kotlin and other languages). The only crate with a foreign interface. |
 | `kotoba-uniffi-bindgen` | Binding generator used by the Android build. |
+| `kotoba-wasm` | WebAssembly build of the layout checker, used by the web page in `web/validator`. |
 
 The first five crates have no `unsafe` code and no platform dependencies. They can be copied out on their own: `kotoba-layout` and `kotoba-input` are independent, `kotoba-session` uses those and `kotoba-emoji`.
 
@@ -50,6 +51,19 @@ cargo run -p kotoba-cli -- list
 ```
 
 The Android build runs `cargo ndk` and the binding generator from Gradle (`:app:buildEngineLibraries`, `:app:generateEngineBindings`).
+
+## Web checker
+
+`web/validator` is a static page that checks a layout file with the engine in the browser and previews its keys. Nothing is uploaded.
+
+```
+cargo install wasm-bindgen-cli --version 0.2.130
+rustup target add wasm32-unknown-unknown
+web/validator/build.sh
+python3 -m http.server --directory web/validator 8000
+```
+
+The `wasm-bindgen-cli` version must match the `wasm-bindgen` crate in `crates/wasm/Cargo.toml`.
 
 ## Case mapping
 
