@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kotoba layout checker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>Kotoba layout checker</h1>
+  <p>Checks a keyboard layout file with the same engine as the app, and shows what it looks like.</p>
+</header>
+
+<main class="grid">
+  <section class="panel editor" aria-labelledby="editor-title">
+    <div class="panel-head">
+      <h2 id="editor-title">Layout</h2>
+      <span id="status" class="chip" role="status" aria-live="polite">Empty</span>
+    </div>
+    <div class="toolbar">
+      <label class="field">
+        <span>Start from</span>
+        <select id="templates"><option value="">Choose a built-in layout</option></select>
+      </label>
+      <label class="button" for="file">Open file</label>
+      <input id="file" type="file" accept=".json,application/json,text/plain" hidden>
+      <button id="clear" type="button" class="button">Clear</button>
+    </div>
+    <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Layout JSON" placeholder="Paste a layout here, drop a file on this box, or start from a built-in layout."></textarea>
+  </section>
+
+  <section class="panel result" aria-labelledby="result-title">
+    <div class="panel-head"><h2 id="result-title">Problems</h2></div>
+    <ul id="issues" class="issues" aria-live="polite"></ul>
+
+    <div class="panel-head preview-head">
+      <h2>Preview</h2>
+      <div class="controls">
+        <label class="field compact"><span>Layer</span><select id="layer"></select></label>
+        <label class="check"><input id="shift" type="checkbox"> Shift</label>
+        <label class="check"><input id="numbers" type="checkbox" checked> Number row</label>
+      </div>
+    </div>
+    <div id="preview" class="preview" aria-label="Keyboard preview"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Runs entirely in your browser. Nothing is uploaded. Format description: <code>docs/layout-format.md</code> in the repository.</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
