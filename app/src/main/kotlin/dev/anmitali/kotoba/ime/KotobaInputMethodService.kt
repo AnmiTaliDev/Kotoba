@@ -72,6 +72,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         onEnter = { dispatch(Event.Enter) },
         onSpace = { dispatch(Event.Space) },
         onLayer = { dispatch(Event.SwitchLayer(it)) },
+        onSwitchLanguage = { dispatch(Event.SwitchLanguage) },
         onOpenSettings = ::openSettings,
     )
 
@@ -130,9 +131,14 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
     }
 
     private fun applySubtype(subtype: InputMethodSubtype?) {
+        updateLanguageSwitch()
         val id = SubtypeRegistrar.layoutIdOf(subtype) ?: return
         engine.selectLayout(id)
         state.update(engine.state())
+    }
+
+    private fun updateLanguageSwitch() {
+        state.languageSwitchVisible = SubtypeRegistrar.enabledSubtypeCount(this) > 1
     }
 
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
@@ -227,6 +233,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
             Command.BeginBatch -> connection.beginBatchEdit()
             Command.EndBatch -> connection.endBatchEdit()
             Command.SendEnterKey -> sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            Command.SwitchLanguage -> switchToNextInputMethod(true)
             Command.PerformEditorAction ->
                 connection.performEditorAction(currentInputEditorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
         }

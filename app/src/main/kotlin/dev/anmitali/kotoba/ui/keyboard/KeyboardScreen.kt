@@ -64,6 +64,7 @@ data class KeyboardActions(
     val onEnter: () -> Unit,
     val onSpace: () -> Unit,
     val onLayer: (String) -> Unit,
+    val onSwitchLanguage: () -> Unit,
     val onOpenSettings: () -> Unit,
 )
 
@@ -117,7 +118,12 @@ fun KeyboardScreen(
                         }
                         val showNumberRow = state.settings.numberRow && layer.numberRow &&
                             state.layout.numberRow.isNotEmpty()
-                        val rows = if (showNumberRow) listOf(state.layout.numberRow) + layer.rows else layer.rows
+                        val layerRows = if (state.languageSwitchVisible) {
+                            layer.rows
+                        } else {
+                            layer.rows.map { row -> row.filter { it !is Key.Language } }
+                        }
+                        val rows = if (showNumberRow) listOf(state.layout.numberRow) + layerRows else layerRows
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -366,6 +372,30 @@ private fun RowScope.KeyCell(
             content = colors.onSecondaryContainer,
             cornerRadius = cornerRadius,
             onTap = { actions.onLayer(key.target) },
+        ) {
+            val iconPainter = key.icon?.let { namedIconPainterOrNull(it) }
+            if (iconPainter != null) {
+                Icon(
+                    painter = iconPainter,
+                    contentDescription = null,
+                    tint = colors.onSecondaryContainer,
+                )
+            } else {
+                Text(
+                    text = key.label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.onSecondaryContainer,
+                )
+            }
+        }
+
+        is Key.Language -> KeyButton(
+            weight = key.weight,
+            description = key.label,
+            container = colors.secondaryContainer,
+            content = colors.onSecondaryContainer,
+            cornerRadius = cornerRadius,
+            onTap = actions.onSwitchLanguage,
         ) {
             val iconPainter = key.icon?.let { namedIconPainterOrNull(it) }
             if (iconPainter != null) {

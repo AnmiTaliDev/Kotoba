@@ -37,6 +37,7 @@ class KeyboardState(
     var preview by mutableStateOf<KeyPreviewTarget?>(null)
     var alternates by mutableStateOf<AlternatesPopup?>(null)
     var navigationBarHeightPx by mutableIntStateOf(0)
+    var languageSwitchVisible by mutableStateOf(false)
 
     val layout: KeyboardLayout get() = layouts.first { it.id == session.layoutId }
 

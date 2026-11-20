@@ -11,6 +11,7 @@ val Key.weight: Float
         is Key.Space -> weight
         is Key.Spacer -> weight
         is Key.Layer -> weight
+        is Key.Language -> weight
     }
 
 fun Key.Char.text(shifted: Boolean): String = if (shifted) this.shifted else label

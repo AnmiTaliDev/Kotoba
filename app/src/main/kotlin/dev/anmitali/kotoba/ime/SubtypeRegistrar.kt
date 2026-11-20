@@ -33,6 +33,12 @@ object SubtypeRegistrar {
         return Locale.Builder().setLanguage(locale.language).setRegion(locale.country).build().toString()
     }
 
+    fun enabledSubtypeCount(context: Context): Int {
+        val manager = context.getSystemService(InputMethodManager::class.java)
+        val method = manager.enabledInputMethodList.firstOrNull { it.packageName == context.packageName } ?: return 0
+        return manager.getEnabledInputMethodSubtypeList(method, true).size
+    }
+
     fun layoutIdOf(subtype: InputMethodSubtype?): String? =
         subtype?.extraValue
             ?.split(',')
