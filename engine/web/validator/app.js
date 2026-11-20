@@ -55,8 +55,8 @@ function renderIssues(list) {
 function keyText(key, shifted, layout) {
   switch (key.type) {
     case "char": return shifted ? key.shifted : key.label;
-    case "layer":
-    case "language": return key.label;
+    case "layer": return key.label;
+    case "language": return "Lang";
     case "shift": return "⇧";
     case "delete": return "⌫";
     case "enter": return "↵";
@@ -169,7 +169,8 @@ for (const layout of JSON.parse(built_in_layouts())) {
 
 templates.addEventListener("change", () => {
   if (!templates.value) return;
-  editor.value = built_in_text(templates.value) || "";
+  const text = built_in_text(templates.value) || "";
+  editor.value = text.replace(/"id"\s*:\s*"[^"]*"/, '"id": "my-' + templates.value + '"');
   templates.value = "";
   validate();
 });
