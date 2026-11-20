@@ -1,0 +1,17 @@
+[package]
+name = "kotoba-wasm"
+description = "WebAssembly build of the Kotoba layout checker"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kotoba-layout.workspace = true
+kotoba-data.workspace = true
+serde_json.workspace = true
+wasm-bindgen = "0.2.130"
