@@ -41,6 +41,7 @@
       "type": "object",
       "properties": {
         "kind": { "enum": ["keys", "emoji"] },
+        "label": { "$ref": "#/$defs/label" },
         "shiftable": { "type": "boolean" },
         "numberRow": { "type": "boolean" },
         "rows": {
@@ -49,7 +50,7 @@
         },
         "back": {
           "type": "object",
-          "required": ["label", "layer"],
+          "required": ["layer"],
           "properties": {
             "label": { "type": "string" },
             "layer": { "type": "string" }
@@ -82,7 +83,7 @@
           "allOf": [
             {
               "if": { "properties": { "type": { "const": "layer" } }, "required": ["type"] },
-              "then": { "required": ["label", "layer"] }
+              "then": { "required": ["layer"] }
             },
             {
               "if": { "properties": { "type": { "const": "language" } }, "required": ["type"] },

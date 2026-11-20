@@ -80,10 +80,11 @@ A layer id matches `[a-z0-9_-]{1,32}`. Layers are switched with `layer` keys.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `kind` | string | `keys` | `keys` for a key grid, `emoji` for the emoji panel. |
+| `label` | string | | Short name of the layer, up to 8 characters. Layer keys and the `back` link that lead to this layer and have no label of their own show it. |
 | `shiftable` | boolean | `false` | Whether the shift key affects this layer. |
 | `numberRow` | boolean | `false` | Whether the optional number row is shown on this layer. |
 | `rows` | array | | Rows of keys. Required for `keys` layers. |
-| `back` | object | | Required for `emoji` layers: `{ "label": "ABC", "layer": "letters" }`. |
+| `back` | object | | Required for `emoji` layers: `{ "layer": "letters" }`. Its `label` is optional and defaults to the `label` of the target layer. |
 
 Rows are listed top to bottom. Keys inside a row are listed in the order they are drawn from left to right. The keyboard is always drawn left to right, including for right-to-left languages, so write such layouts in their physical order.
 
@@ -104,7 +105,7 @@ An object has a `type` and an optional `weight`. Weight is the relative width, d
 | `space` | | Space bar. |
 | `spacer` | | Empty gap. |
 | `language` | `label`, optional `icon` | Switches to the next enabled layout. Shown only when more than one layout is enabled on the device. `label` is the description, or the text when the icon is unknown. |
-| `layer` | `label`, `layer`, optional `icon` | Switches to layer `layer`. `label` is shown, or used as the description when an icon is present. `icon` names a built-in icon and falls back to the label if unknown. |
+| `layer` | `layer`, optional `label`, optional `icon` | Switches to layer `layer`. `label` is shown, or used as the description when an icon is present. When `label` is missing or empty the `label` of the target layer is used, and it is an error when that is missing too. `icon` names a built-in icon and falls back to the label if unknown. |
 
 Use `shifted` when the upper case differs from the language default, for example `{ "label": "ß", "shifted": "ẞ" }`.
 
@@ -151,6 +152,7 @@ Errors:
 - unknown key `type`, unknown layer kind, `layer` or `defaultLayer` pointing to a missing layer;
 - empty row, `keys` layer without rows, `emoji` layer without `back`;
 - label longer than 8 characters, weight not greater than 0 or above 10;
+- a `layer` key or `back` link without a label whose target layer has no `label`;
 - `hold` with more than 12 items, an empty or non-string item, or `holdShifted` of a different size;
 - more than 200 keys in total;
 - default layer without a `space` key.
