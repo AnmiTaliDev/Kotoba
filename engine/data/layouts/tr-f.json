@@ -12,7 +12,7 @@
         ["f", "g", "ğ", "ı", "o", "d", "r", "n", "h", "p", "q", "w"],
         ["u", "i", {"label": "e", "hold": ["€"]}, "a", "ü", {"label": "t", "hold": ["₺"]}, "k", "m", "l", "y", "ş", "x"],
         [{"type": "shift", "weight": 1.5}, "j", "ö", "v", "c", "ç", "z", "s", "b", {"type": "delete", "weight": 1.5}],
-        [{"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.3}, ",", {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"}, {"type": "space", "weight": 4.2}, ".", {"type": "enter", "weight": 1.4}]
+        [{"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.2}, {"type": "language", "label": "Language", "icon": "ic_key_language"}, ",", {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"}, {"type": "space", "weight": 3.6}, ".", {"type": "enter", "weight": 1.3}]
       ]
     }
   }

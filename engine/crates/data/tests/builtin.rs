@@ -330,3 +330,17 @@ fn emoji_data_parses_and_has_a_recent_tab_first() {
             .all(|c| !c.recent && !c.emoji.is_empty())
     );
 }
+
+#[test]
+fn every_built_in_layout_has_a_language_key_on_its_letters_layer() {
+    for layout in loaded().layouts {
+        let has = layout
+            .layer(&layout.default_layer)
+            .unwrap()
+            .rows
+            .iter()
+            .flatten()
+            .any(|key| matches!(key, Key::Language(_)));
+        assert!(has, "{} has no language key", layout.id);
+    }
+}

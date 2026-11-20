@@ -26,12 +26,13 @@
           {"type": "delete", "weight": 1.5}
         ],
         [
-          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.3},
+          {"type": "layer", "label": "?123", "layer": "symbols", "weight": 1.2},
+          {"type": "language", "label": "Language", "icon": "ic_key_language"},
           ",",
           {"type": "layer", "label": "Emoji", "icon": "ic_key_emoji", "layer": "emoji"},
-          {"type": "space", "weight": 4.2},
+          {"type": "space", "weight": 3.6},
           ".",
-          {"type": "enter", "weight": 1.4}
+          {"type": "enter", "weight": 1.3}
         ]
       ]
     },
