@@ -98,6 +98,11 @@ pub enum Key {
         icon: Option<String>,
         weight: f32,
     },
+    Language {
+        label: String,
+        icon: Option<String>,
+        weight: f32,
+    },
 }
 
 #[derive(Debug, Clone, uniffi::Enum)]
@@ -146,6 +151,7 @@ pub enum Event {
     Enter,
     Shift,
     SwitchLayer { layer_id: String },
+    SwitchLanguage,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -169,6 +175,7 @@ pub enum Command {
     EndBatch,
     SendEnterKey,
     PerformEditorAction,
+    SwitchLanguage,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]

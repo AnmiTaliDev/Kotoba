@@ -22,6 +22,7 @@ pub enum Event {
     Enter,
     Shift,
     SwitchLayer { layer_id: String },
+    SwitchLanguage,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -45,6 +46,7 @@ pub enum Command {
     EndBatch,
     SendEnterKey,
     PerformEditorAction,
+    SwitchLanguage,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -256,6 +258,12 @@ impl Session {
                     needs_text_after_edit: false,
                 };
             }
+            Event::SwitchLanguage => {
+                return Outcome {
+                    commands: vec![Command::SwitchLanguage],
+                    needs_text_after_edit: false,
+                };
+            }
             Event::SwitchLayer { layer_id } => {
                 if self.layout().layer(&layer_id).is_some() {
                     self.layer_id = layer_id;
@@ -285,6 +293,11 @@ impl Session {
             &sentence_end,
             self.auto_capitalize_enabled(),
         );
+    }
+
+    pub fn next_layout_id(&self) -> String {
+        let next = (self.layout_index + 1) % self.layouts.len();
+        self.layouts[next].id.clone()
     }
 
     pub fn is_emoji_layer(&self) -> bool {

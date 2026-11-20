@@ -408,3 +408,22 @@ fn needs_tells_what_the_platform_must_supply() {
         Needs::default()
     );
 }
+
+#[test]
+fn switching_language_is_left_to_the_platform() {
+    let mut session = session();
+    let before = session.state();
+    let outcome = session.press(Event::SwitchLanguage, &ctx(0));
+    assert_eq!(outcome.commands, [Command::SwitchLanguage]);
+    assert!(!outcome.needs_text_after_edit);
+    assert_eq!(session.state(), before);
+}
+
+#[test]
+fn next_layout_id_cycles_through_the_layouts() {
+    let mut session = session();
+    let ids: Vec<String> = session.layouts().iter().map(|l| l.id.clone()).collect();
+    assert_eq!(session.next_layout_id(), ids[1]);
+    session.select_layout(ids.last().unwrap());
+    assert_eq!(session.next_layout_id(), ids[0]);
+}

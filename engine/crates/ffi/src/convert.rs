@@ -58,6 +58,11 @@ impl From<&layout::Key> for Key {
             layout::Key::Enter { weight } => Key::Enter { weight: *weight },
             layout::Key::Space { weight } => Key::Space { weight: *weight },
             layout::Key::Spacer { weight } => Key::Spacer { weight: *weight },
+            layout::Key::Language(key) => Key::Language {
+                label: key.label.clone(),
+                icon: key.icon.clone(),
+                weight: key.weight,
+            },
             layout::Key::Layer(key) => Key::Layer {
                 label: key.label.clone(),
                 target: key.target.clone(),
@@ -180,6 +185,7 @@ impl From<Event> for session::Event {
             Event::Enter => session::Event::Enter,
             Event::Shift => session::Event::Shift,
             Event::SwitchLayer { layer_id } => session::Event::SwitchLayer { layer_id },
+            Event::SwitchLanguage => session::Event::SwitchLanguage,
         }
     }
 }
@@ -214,6 +220,7 @@ impl From<session::Command> for Command {
             session::Command::EndBatch => Command::EndBatch,
             session::Command::SendEnterKey => Command::SendEnterKey,
             session::Command::PerformEditorAction => Command::PerformEditorAction,
+            session::Command::SwitchLanguage => Command::SwitchLanguage,
         }
     }
 }
