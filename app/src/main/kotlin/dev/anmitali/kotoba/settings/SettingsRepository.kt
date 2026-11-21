@@ -17,6 +17,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 private val KeyCornerRadiusKey = intPreferencesKey("key_corner_radius_dp")
 private val NumberRowKey = booleanPreferencesKey("number_row")
+private val HapticsKey = booleanPreferencesKey("haptics")
 private val RecentEmojiKey = stringPreferencesKey("recent_emoji")
 private val LayoutsRevisionKey = intPreferencesKey("layouts_revision")
 
@@ -29,6 +30,7 @@ class SettingsRepository(context: Context) {
             keyCornerRadiusDp = (prefs[KeyCornerRadiusKey] ?: KeyboardSettings.DefaultKeyCornerRadiusDp)
                 .coerceIn(KeyboardSettings.MinKeyCornerRadiusDp, KeyboardSettings.MaxKeyCornerRadiusDp),
             numberRow = prefs[NumberRowKey] ?: KeyboardSettings.DefaultNumberRow,
+            haptics = prefs[HapticsKey] ?: KeyboardSettings.DefaultHaptics,
         )
     }
 
@@ -48,6 +50,10 @@ class SettingsRepository(context: Context) {
 
     suspend fun setKeyCornerRadius(dp: Int) {
         store.edit { it[KeyCornerRadiusKey] = dp }
+    }
+
+    suspend fun setHaptics(enabled: Boolean) {
+        store.edit { it[HapticsKey] = enabled }
     }
 
     suspend fun setNumberRow(enabled: Boolean) {

@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,8 @@ import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.platform.LocalView
+import android.view.HapticFeedbackConstants
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -55,6 +58,8 @@ private const val REPEAT_DELAY_MS = 420L
 private const val REPEAT_INTERVAL_MS = 55L
 private const val ColorDurationMs = 60
 val AlternativeCellWidth = 44.dp
+
+val LocalKeyHaptics = staticCompositionLocalOf { false }
 
 private enum class HoldOutcome { Tap, Cancelled }
 
@@ -128,6 +133,8 @@ fun RowScope.KeyButton(
     val currentAlternative by rememberUpdatedState(onAlternative)
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
+    val haptics by rememberUpdatedState(LocalKeyHaptics.current)
 
     Box(
         modifier = modifier
@@ -156,6 +163,7 @@ fun RowScope.KeyButton(
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val press = PressInteraction.Press(down.position)
                     interaction.tryEmit(press)
+                    if (haptics) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                     val attached = coordinates?.takeIf { it.isAttached }
                     val bounds = attached?.boundsInRoot()
                     val target = currentPreviewText?.let { text -> bounds?.let { KeyPreviewTarget(text, it) } }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -65,14 +66,14 @@ private const val LayerFadeMs = 0
 private val PreviewHeight = 60.dp
 private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
-private val KeyRowHeight = 47.dp
+private val KeyRowHeight = 52.dp
 private val AlternativeCellHeight = 52.dp
 private const val DefaultBodyRows = 4
 private val ToolbarHeight = 48.dp
 private val ToolbarButtonSize = 40.dp
 private val BodyPadding = PaddingValues(start = 4.dp, top = 4.dp, end = 4.dp, bottom = 6.dp)
-private val KeyGap = 4.dp
-private val RowGap = 6.dp
+private val KeyGap = 3.dp
+private val RowGap = 5.dp
 private val BodyVerticalPadding = 10.dp
 
 private fun bodyHeight(rows: Int): Dp = KeyRowHeight * rows + RowGap * (rows - 1) + BodyVerticalPadding
@@ -86,7 +87,10 @@ fun KeyboardScreen(
 ) {
     val keyCornerRadius = state.settings.keyCornerRadiusDp.dp
     val navigationBarHeight = with(LocalDensity.current) { state.navigationBarHeightPx.toDp() }
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+    CompositionLocalProvider(
+        LocalLayoutDirection provides LayoutDirection.Ltr,
+        LocalKeyHaptics provides state.settings.haptics,
+    ) {
         Box(modifier = modifier.fillMaxWidth()) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.height(KeyboardPreviewArea))
@@ -262,7 +266,18 @@ private fun RowScope.KeyCell(
                 onPreviewShow = { state.preview = it },
                 onPreviewHide = { if (state.preview === it) state.preview = null },
             ) {
-                Text(text = text, style = MaterialTheme.typography.titleLarge)
+                val hint = key.alternatives(shifted).firstOrNull()
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Text(text = text, style = MaterialTheme.typography.titleLarge)
+                    if (hint != null) {
+                        Text(
+                            text = hint,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.align(Alignment.TopEnd).padding(top = 3.dp, end = 5.dp),
+                        )
+                    }
+                }
             }
         }
 

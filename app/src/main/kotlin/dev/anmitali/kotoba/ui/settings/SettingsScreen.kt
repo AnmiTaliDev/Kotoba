@@ -115,6 +115,24 @@ fun SettingsScreen(repository: SettingsRepository) {
                         {
                             ListItem(
                                 colors = TransparentListItem(),
+                                headlineContent = { Text(stringResource(R.string.haptics_title)) },
+                                supportingContent = { Text(stringResource(R.string.haptics_body)) },
+                                trailingContent = {
+                                    Switch(
+                                        checked = settings.haptics,
+                                        onCheckedChange = { scope.launch { repository.setHaptics(it) } },
+                                        thumbContent = if (settings.haptics) {
+                                            { Icon(Icons.Filled.Check, contentDescription = null) }
+                                        } else {
+                                            null
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                        {
+                            ListItem(
+                                colors = TransparentListItem(),
                                 headlineContent = { Text(stringResource(R.string.number_row_title)) },
                                 supportingContent = { Text(stringResource(R.string.number_row_body)) },
                                 trailingContent = {

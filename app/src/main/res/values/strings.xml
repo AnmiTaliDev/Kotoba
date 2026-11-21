@@ -29,6 +29,8 @@
     <string name="key_radius_title">Key corner radius</string>
     <string name="key_radius_value">%1$d dp</string>
     <string name="layout_title">Layout</string>
+    <string name="haptics_title">Vibration</string>
+    <string name="haptics_body">Vibrate on key press.</string>
     <string name="number_row_title">Number row</string>
     <string name="number_row_body">Show digits above the letter rows.</string>
     <string name="emoji_recent_empty">No recent emoji yet</string>
