@@ -66,17 +66,20 @@ private const val LayerFadeMs = 0
 private val PreviewHeight = 60.dp
 private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
-private val KeyRowHeight = 52.dp
+private val KeyRowHeight = 44.dp
 private val AlternativeCellHeight = 52.dp
 private const val DefaultBodyRows = 4
-private val ToolbarHeight = 48.dp
-private val ToolbarButtonSize = 40.dp
+private val ToolbarHeight = 36.dp
+private val ToolbarButtonSize = 32.dp
 private val BodyPadding = PaddingValues(start = 4.dp, top = 4.dp, end = 4.dp, bottom = 6.dp)
 private val KeyGap = 3.dp
-private val RowGap = 5.dp
+private val RowGap = 4.dp
 private val BodyVerticalPadding = 10.dp
 
-private fun bodyHeight(rows: Int): Dp = KeyRowHeight * rows + RowGap * (rows - 1) + BodyVerticalPadding
+private const val NumberRowWeight = 0.75f
+
+private fun bodyHeight(rows: Int, compactFirst: Boolean = false): Dp =
+    KeyRowHeight * (if (compactFirst) rows - (1f - NumberRowWeight) else rows.toFloat()) + RowGap * (rows - 1) + BodyVerticalPadding
 private val BodyHeight = bodyHeight(DefaultBodyRows)
 
 @Composable
@@ -124,15 +127,15 @@ fun KeyboardScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(bodyHeight(rows.size))
+                                .height(bodyHeight(rows.size, showNumberRow))
                                 .padding(BodyPadding),
                             verticalArrangement = Arrangement.spacedBy(RowGap),
                         ) {
-                            for (row in rows) {
+                            rows.forEachIndexed { index, row ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .weight(1f),
+                                        .weight(if (showNumberRow && index == 0) NumberRowWeight else 1f),
                                     horizontalArrangement = Arrangement.spacedBy(KeyGap),
                                 ) {
                                     for (key in row) {
