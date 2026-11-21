@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalView
@@ -58,6 +59,7 @@ private const val REPEAT_DELAY_MS = 420L
 private const val REPEAT_INTERVAL_MS = 55L
 private const val ColorDurationMs = 60
 val AlternativeCellWidth = 44.dp
+private val DragStep = 14.dp
 
 val LocalKeyHaptics = staticCompositionLocalOf { false }
 
@@ -110,6 +112,7 @@ fun RowScope.KeyButton(
     modifier: Modifier = Modifier,
     pill: Boolean = false,
     repeatOnHold: Boolean = false,
+    onDragStep: ((Int) -> Unit)? = null,
     previewText: String? = null,
     alternatives: List<String> = emptyList(),
     onAlternativesChange: (AlternatesPopup?) -> Unit = {},
@@ -125,6 +128,7 @@ fun RowScope.KeyButton(
         label = "keyContainer",
     )
     val currentTap by rememberUpdatedState(onTap)
+    val currentDragStep by rememberUpdatedState(onDragStep)
     val currentPreviewText by rememberUpdatedState(previewText)
     val currentShow by rememberUpdatedState(onPreviewShow)
     val currentHide by rememberUpdatedState(onPreviewHide)
@@ -158,7 +162,7 @@ fun RowScope.KeyButton(
                     }
                 }
             }
-            .pointerInput(repeatOnHold) {
+            .pointerInput(repeatOnHold, onDragStep != null) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val press = PressInteraction.Press(down.position)
@@ -169,7 +173,32 @@ fun RowScope.KeyButton(
                     val target = currentPreviewText?.let { text -> bounds?.let { KeyPreviewTarget(text, it) } }
                     if (target != null) currentShow(target)
                     val items = currentAlternatives
-                    val completed = if (items.isEmpty() || bounds == null || attached == null) {
+                    val dragStep = currentDragStep
+                    val completed = if (dragStep != null) {
+                        val stepPx = DragStep.toPx()
+                        var accumulated = 0f
+                        var dragged = false
+                        var up = false
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) {
+                                up = change.changedToUp()
+                                break
+                            }
+                            accumulated += change.positionChange().x
+                            val steps = (accumulated / stepPx).toInt()
+                            if (steps != 0) {
+                                dragged = true
+                                accumulated -= steps * stepPx
+                                currentDragStep?.invoke(steps)
+                                if (haptics) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                            }
+                            if (dragged) change.consume()
+                        }
+                        if (up && !dragged) currentTap()
+                        up
+                    } else if (items.isEmpty() || bounds == null || attached == null) {
                         currentTap()
                         val repeat = if (repeatOnHold) {
                             scope.launch {

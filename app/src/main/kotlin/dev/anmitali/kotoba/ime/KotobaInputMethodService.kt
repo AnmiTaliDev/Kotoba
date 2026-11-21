@@ -71,10 +71,22 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         onDelete = { dispatch(Event.Delete) },
         onEnter = { dispatch(Event.Enter) },
         onSpace = { dispatch(Event.Space) },
+        onMoveCursor = ::moveCursor,
         onLayer = { dispatch(Event.SwitchLayer(it)) },
         onSwitchLanguage = { dispatch(Event.SwitchLanguage) },
         onOpenSettings = ::openSettings,
     )
+
+    private fun moveCursor(steps: Int) {
+        val connection = currentInputConnection ?: return
+        val code = if (steps < 0) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
+        connection.beginBatchEdit()
+        repeat(kotlin.math.abs(steps)) {
+            connection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
+            connection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
+        }
+        connection.endBatchEdit()
+    }
 
     override fun onCreate() {
         super.onCreate()

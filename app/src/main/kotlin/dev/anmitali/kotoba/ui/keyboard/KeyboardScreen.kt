@@ -61,6 +61,7 @@ data class KeyboardActions(
     val onDelete: () -> Unit,
     val onEnter: () -> Unit,
     val onSpace: () -> Unit,
+    val onMoveCursor: (Int) -> Unit,
     val onLayer: (String) -> Unit,
     val onSwitchLanguage: () -> Unit,
     val onOpenSettings: () -> Unit,
@@ -369,6 +370,7 @@ private fun RowScope.KeyCell(
             content = colors.onSurfaceVariant,
             cornerRadius = cornerRadius,
             onTap = actions.onSpace,
+            onDragStep = actions.onMoveCursor,
         ) {
             Text(
                 text = state.layout.name,
