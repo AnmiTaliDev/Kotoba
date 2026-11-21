@@ -62,6 +62,7 @@ data class KeyboardActions(
     val onEnter: () -> Unit,
     val onSpace: () -> Unit,
     val onMoveCursor: (Int) -> Unit,
+    val onDeleteWords: (Int) -> Unit,
     val onLayer: (String) -> Unit,
     val onSwitchLanguage: () -> Unit,
     val onOpenSettings: () -> Unit,
@@ -341,6 +342,7 @@ private fun RowScope.KeyCell(
             cornerRadius = cornerRadius,
             onTap = actions.onDelete,
             repeatOnHold = true,
+            onDragStep = actions.onDeleteWords,
         ) {
             Icon(imageVector = BackspaceIcon, contentDescription = null, tint = colors.onSecondaryContainer)
         }

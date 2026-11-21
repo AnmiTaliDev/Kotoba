@@ -60,8 +60,36 @@ private const val REPEAT_INTERVAL_MS = 55L
 private const val ColorDurationMs = 60
 val AlternativeCellWidth = 44.dp
 private val DragStep = 14.dp
+private val DeleteDragStep = 40.dp
 
 val LocalKeyHaptics = staticCompositionLocalOf { false }
+
+private class DragResult(val up: Boolean, val dragged: Boolean)
+
+private suspend fun AwaitPointerEventScope.trackDrag(
+    pointerId: PointerId,
+    stepPx: Float,
+    onStep: (Int) -> Unit,
+    haptics: Boolean,
+    view: android.view.View,
+): DragResult {
+    var accumulated = 0f
+    var dragged = false
+    while (true) {
+        val event = awaitPointerEvent()
+        val change = event.changes.firstOrNull { it.id == pointerId } ?: return DragResult(false, dragged)
+        if (!change.pressed) return DragResult(change.changedToUp(), dragged)
+        accumulated += change.positionChange().x
+        val steps = (accumulated / stepPx).toInt()
+        if (steps != 0) {
+            dragged = true
+            accumulated -= steps * stepPx
+            onStep(steps)
+            if (haptics) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
+        if (dragged) change.consume()
+    }
+}
 
 private enum class HoldOutcome { Tap, Cancelled }
 
@@ -174,30 +202,10 @@ fun RowScope.KeyButton(
                     if (target != null) currentShow(target)
                     val items = currentAlternatives
                     val dragStep = currentDragStep
-                    val completed = if (dragStep != null) {
-                        val stepPx = DragStep.toPx()
-                        var accumulated = 0f
-                        var dragged = false
-                        var up = false
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                            if (!change.pressed) {
-                                up = change.changedToUp()
-                                break
-                            }
-                            accumulated += change.positionChange().x
-                            val steps = (accumulated / stepPx).toInt()
-                            if (steps != 0) {
-                                dragged = true
-                                accumulated -= steps * stepPx
-                                currentDragStep?.invoke(steps)
-                                if (haptics) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                            }
-                            if (dragged) change.consume()
-                        }
-                        if (up && !dragged) currentTap()
-                        up
+                    val completed = if (dragStep != null && !repeatOnHold) {
+                        val result = trackDrag(down.id, DragStep.toPx(), { currentDragStep?.invoke(it) }, haptics, view)
+                        if (result.up && !result.dragged) currentTap()
+                        result.up
                     } else if (items.isEmpty() || bounds == null || attached == null) {
                         currentTap()
                         val repeat = if (repeatOnHold) {
@@ -211,9 +219,23 @@ fun RowScope.KeyButton(
                         } else {
                             null
                         }
-                        val up = waitForUpOrCancellation()
+                        val result = if (dragStep != null) {
+                            trackDrag(
+                                down.id,
+                                DeleteDragStep.toPx(),
+                                { steps ->
+                                    repeat?.cancel()
+                                    if (steps < 0) currentDragStep?.invoke(steps)
+                                },
+                                haptics,
+                                view,
+                            )
+                        } else {
+                            val up = waitForUpOrCancellation()
+                            DragResult(up != null, false)
+                        }
                         repeat?.cancel()
-                        up != null
+                        result.up
                     } else {
                         val outcome = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
                             if (waitForUpOrCancellation() != null) HoldOutcome.Tap else HoldOutcome.Cancelled

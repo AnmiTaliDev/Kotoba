@@ -72,6 +72,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         onEnter = { dispatch(Event.Enter) },
         onSpace = { dispatch(Event.Space) },
         onMoveCursor = ::moveCursor,
+        onDeleteWords = ::deleteWords,
         onLayer = { dispatch(Event.SwitchLayer(it)) },
         onSwitchLanguage = { dispatch(Event.SwitchLanguage) },
         onOpenSettings = ::openSettings,
@@ -86,6 +87,39 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
             connection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
         }
         connection.endBatchEdit()
+    }
+
+    private fun deleteWords(steps: Int) {
+        val connection = currentInputConnection ?: return
+        connection.beginBatchEdit()
+        repeat(kotlin.math.abs(steps)) {
+            val text = connection.getTextBeforeCursor(CONTEXT_CHARS, 0)?.toString().orEmpty()
+            val count = wordLengthBefore(text)
+            if (count > 0) connection.deleteSurroundingTextInCodePoints(count, 0)
+        }
+        connection.endBatchEdit()
+        if (engine.needsTextAfterEdit()) engine.afterEdit(textBeforeCursor())
+        state.update(engine.state())
+    }
+
+    private fun wordLengthBefore(text: String): Int {
+        var index = text.length
+        var count = 0
+        while (index > 0) {
+            val cp = text.codePointBefore(index)
+            if (!Character.isWhitespace(cp)) break
+            index -= Character.charCount(cp)
+            count++
+        }
+        if (index == 0) return count
+        val wordClass = Character.isLetterOrDigit(text.codePointBefore(index))
+        while (index > 0) {
+            val cp = text.codePointBefore(index)
+            if (Character.isWhitespace(cp) || Character.isLetterOrDigit(cp) != wordClass) break
+            index -= Character.charCount(cp)
+            count++
+        }
+        return count
     }
 
     override fun onCreate() {
