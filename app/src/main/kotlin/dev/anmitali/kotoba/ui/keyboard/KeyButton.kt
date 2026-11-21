@@ -1,10 +1,6 @@
 package dev.anmitali.kotoba.ui.keyboard
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -13,7 +9,6 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -58,9 +53,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 private const val REPEAT_DELAY_MS = 420L
 private const val REPEAT_INTERVAL_MS = 55L
-private const val PressedScale = 0.94f
-private const val ColorDurationMs = 150
-private val PressedCorner = 28.dp
+private const val ColorDurationMs = 60
 val AlternativeCellWidth = 44.dp
 
 private enum class HoldOutcome { Tap, Cancelled }
@@ -121,17 +114,6 @@ fun RowScope.KeyButton(
     body: @Composable () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val corner = animateDpAsState(
-        targetValue = if (pressed) PressedCorner else cornerRadius,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium),
-        label = "keyCorner",
-    )
-    val scale = animateFloatAsState(
-        targetValue = if (pressed) PressedScale else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-        label = "keyScale",
-    )
     val containerColor = animateColorAsState(
         targetValue = container,
         animationSpec = tween(durationMillis = ColorDurationMs),
@@ -153,9 +135,7 @@ fun RowScope.KeyButton(
             .fillMaxHeight()
             .onGloballyPositioned { coordinates = it }
             .graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
-                shape = if (pill) CircleShape else RoundedCornerShape(corner.value)
+                shape = if (pill) CircleShape else RoundedCornerShape(cornerRadius)
                 clip = true
             }
             .drawBehind { drawRect(containerColor.value) }
