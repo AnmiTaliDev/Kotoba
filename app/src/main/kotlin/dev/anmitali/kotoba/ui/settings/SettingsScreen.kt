@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.anmitali.kotoba.R
+import dev.anmitali.kotoba.settings.FlagSetting
+import dev.anmitali.kotoba.settings.IntSetting
 import dev.anmitali.kotoba.settings.KeyboardSettings
 import dev.anmitali.kotoba.settings.LayoutsActivity
 import dev.anmitali.kotoba.settings.SettingsRepository
@@ -106,6 +108,115 @@ fun SettingsScreen(repository: SettingsRepository) {
                             },
                         )
                     },
+                )
+            }
+            item {
+                SettingsGroup(
+                    title = stringResource(R.string.size_title),
+                    items = listOf(
+                        {
+                            SliderSettingItem(
+                                title = stringResource(R.string.key_height_title),
+                                value = settings.int(IntSetting.KeyHeight),
+                                setting = IntSetting.KeyHeight,
+                                valueLabel = stringResource(R.string.dp_value, settings.int(IntSetting.KeyHeight)),
+                            ) { scope.launch { repository.setInt(IntSetting.KeyHeight, it) } }
+                        },
+                        {
+                            SliderSettingItem(
+                                title = stringResource(R.string.key_gap_title),
+                                value = settings.int(IntSetting.KeyGap),
+                                setting = IntSetting.KeyGap,
+                                valueLabel = stringResource(R.string.dp_value, settings.int(IntSetting.KeyGap)),
+                            ) { scope.launch { repository.setInt(IntSetting.KeyGap, it) } }
+                        },
+                        {
+                            SliderSettingItem(
+                                title = stringResource(R.string.row_gap_title),
+                                value = settings.int(IntSetting.RowGap),
+                                setting = IntSetting.RowGap,
+                                valueLabel = stringResource(R.string.dp_value, settings.int(IntSetting.RowGap)),
+                            ) { scope.launch { repository.setInt(IntSetting.RowGap, it) } }
+                        },
+                        {
+                            SliderSettingItem(
+                                title = stringResource(R.string.label_scale_title),
+                                value = settings.int(IntSetting.LabelScale),
+                                setting = IntSetting.LabelScale,
+                                valueLabel = stringResource(R.string.percent_value, settings.int(IntSetting.LabelScale)),
+                            ) { scope.launch { repository.setInt(IntSetting.LabelScale, it) } }
+                        },
+                        {
+                            SliderSettingItem(
+                                title = stringResource(R.string.bottom_offset_title),
+                                value = settings.int(IntSetting.BottomOffset),
+                                setting = IntSetting.BottomOffset,
+                                valueLabel = stringResource(R.string.dp_value, settings.int(IntSetting.BottomOffset)),
+                            ) { scope.launch { repository.setInt(IntSetting.BottomOffset, it) } }
+                        },
+                    ),
+                )
+            }
+            item {
+                SettingsGroup(
+                    title = stringResource(R.string.one_handed_title),
+                    items = listOf(
+                        {
+                            SliderSettingItem(
+                                title = stringResource(R.string.width_title),
+                                value = settings.int(IntSetting.Width),
+                                setting = IntSetting.Width,
+                                valueLabel = stringResource(R.string.percent_value, settings.int(IntSetting.Width)),
+                            ) { scope.launch { repository.setInt(IntSetting.Width, it) } }
+                        },
+                        {
+                            ChoiceSettingItem(
+                                title = stringResource(R.string.alignment_title),
+                                options = listOf(
+                                    stringResource(R.string.alignment_left),
+                                    stringResource(R.string.alignment_center),
+                                    stringResource(R.string.alignment_right),
+                                ),
+                                selected = settings.int(IntSetting.Alignment),
+                            ) { scope.launch { repository.setInt(IntSetting.Alignment, it) } }
+                        },
+                    ),
+                )
+            }
+            item {
+                SettingsGroup(
+                    title = stringResource(R.string.behavior_title),
+                    items = listOf(
+                        {
+                            SwitchSettingItem(
+                                title = stringResource(R.string.toolbar_title),
+                                body = stringResource(R.string.toolbar_body),
+                                checked = settings.flag(FlagSetting.Toolbar),
+                            ) { scope.launch { repository.setFlag(FlagSetting.Toolbar, it) } }
+                        },
+                        {
+                            SwitchSettingItem(
+                                title = stringResource(R.string.key_preview_title),
+                                body = stringResource(R.string.key_preview_body),
+                                checked = settings.flag(FlagSetting.KeyPreview),
+                            ) { scope.launch { repository.setFlag(FlagSetting.KeyPreview, it) } }
+                        },
+                        {
+                            SwitchSettingItem(
+                                title = stringResource(R.string.hints_title),
+                                body = stringResource(R.string.hints_body),
+                                checked = settings.flag(FlagSetting.Hints),
+                            ) { scope.launch { repository.setFlag(FlagSetting.Hints, it) } }
+                        },
+                        {
+                            ListItem(
+                                modifier = Modifier.clickable { scope.launch { repository.resetAppearance() } },
+                                colors = TransparentListItem(),
+                                headlineContent = { Text(stringResource(R.string.reset_title)) },
+                                supportingContent = { Text(stringResource(R.string.reset_body)) },
+                            )
+                        },
+                    ),
                 )
             }
             item {

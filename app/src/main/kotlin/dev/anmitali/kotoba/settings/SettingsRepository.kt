@@ -31,6 +31,12 @@ class SettingsRepository(context: Context) {
                 .coerceIn(KeyboardSettings.MinKeyCornerRadiusDp, KeyboardSettings.MaxKeyCornerRadiusDp),
             numberRow = prefs[NumberRowKey] ?: KeyboardSettings.DefaultNumberRow,
             haptics = prefs[HapticsKey] ?: KeyboardSettings.DefaultHaptics,
+            ints = IntSetting.entries.associateWith { setting ->
+                (prefs[intPreferencesKey(setting.id)] ?: setting.default).coerceIn(setting.min, setting.max)
+            },
+            flags = FlagSetting.entries.associateWith { setting ->
+                prefs[booleanPreferencesKey(setting.id)] ?: setting.default
+            },
         )
     }
 
@@ -50,6 +56,24 @@ class SettingsRepository(context: Context) {
 
     suspend fun setKeyCornerRadius(dp: Int) {
         store.edit { it[KeyCornerRadiusKey] = dp }
+    }
+
+    suspend fun setInt(setting: IntSetting, value: Int) {
+        store.edit { it[intPreferencesKey(setting.id)] = value.coerceIn(setting.min, setting.max) }
+    }
+
+    suspend fun setFlag(setting: FlagSetting, value: Boolean) {
+        store.edit { it[booleanPreferencesKey(setting.id)] = value }
+    }
+
+    suspend fun resetAppearance() {
+        store.edit { prefs ->
+            IntSetting.entries.forEach { prefs.remove(intPreferencesKey(it.id)) }
+            FlagSetting.entries.forEach { prefs.remove(booleanPreferencesKey(it.id)) }
+            prefs.remove(KeyCornerRadiusKey)
+            prefs.remove(NumberRowKey)
+            prefs.remove(HapticsKey)
+        }
     }
 
     suspend fun setHaptics(enabled: Boolean) {

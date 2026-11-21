@@ -37,6 +37,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import dev.anmitali.kotoba.settings.FlagSetting
+import dev.anmitali.kotoba.settings.IntSetting
+import dev.anmitali.kotoba.settings.KeyboardSettings
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -66,21 +70,18 @@ private const val LayerFadeMs = 0
 private val PreviewHeight = 60.dp
 private val PreviewGap = 8.dp
 val KeyboardPreviewArea = PreviewHeight + PreviewGap
-private val KeyRowHeight = 44.dp
 private val AlternativeCellHeight = 52.dp
 private const val DefaultBodyRows = 4
 private val ToolbarHeight = 36.dp
 private val ToolbarButtonSize = 32.dp
 private val BodyPadding = PaddingValues(start = 4.dp, top = 4.dp, end = 4.dp, bottom = 6.dp)
-private val KeyGap = 3.dp
-private val RowGap = 4.dp
 private val BodyVerticalPadding = 10.dp
 
 private const val NumberRowWeight = 0.75f
 
-private fun bodyHeight(rows: Int, compactFirst: Boolean = false): Dp =
-    KeyRowHeight * (if (compactFirst) rows - (1f - NumberRowWeight) else rows.toFloat()) + RowGap * (rows - 1) + BodyVerticalPadding
-private val BodyHeight = bodyHeight(DefaultBodyRows)
+private fun bodyHeight(settings: KeyboardSettings, rows: Int, compactFirst: Boolean = false): Dp =
+    settings.int(IntSetting.KeyHeight).dp * (if (compactFirst) rows - (1f - NumberRowWeight) else rows.toFloat()) +
+        settings.int(IntSetting.RowGap).dp * (rows - 1) + BodyVerticalPadding
 
 @Composable
 fun KeyboardScreen(
@@ -89,13 +90,23 @@ fun KeyboardScreen(
     modifier: Modifier = Modifier,
 ) {
     val keyCornerRadius = state.settings.keyCornerRadiusDp.dp
-    val navigationBarHeight = with(LocalDensity.current) { state.navigationBarHeightPx.toDp() }
+    val navigationBarHeight = with(LocalDensity.current) { state.navigationBarHeightPx.toDp() } +
+        state.settings.int(IntSetting.BottomOffset).dp
+    val outerDensity = LocalDensity.current
+    val scaledDensity = Density(outerDensity.density, outerDensity.fontScale * state.settings.int(IntSetting.LabelScale) / 100f)
+    val widthFraction = state.settings.int(IntSetting.Width) / 100f
+    val columnAlignment = when (state.settings.int(IntSetting.Alignment)) {
+        0 -> Alignment.BottomStart
+        2 -> Alignment.BottomEnd
+        else -> Alignment.BottomCenter
+    }
     CompositionLocalProvider(
         LocalLayoutDirection provides LayoutDirection.Ltr,
         LocalKeyHaptics provides state.settings.haptics,
+        LocalDensity provides scaledDensity,
     ) {
         Box(modifier = modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.align(columnAlignment).fillMaxWidth(widthFraction)) {
                 Spacer(Modifier.height(KeyboardPreviewArea))
                 Column(
                     modifier = Modifier
@@ -103,9 +114,11 @@ fun KeyboardScreen(
                         .background(MaterialTheme.colorScheme.surfaceContainer)
                         .padding(bottom = navigationBarHeight),
                 ) {
-                    Toolbar(open = state.toolsOpen, onToggle = { state.toolsOpen = !state.toolsOpen })
+                    if (state.settings.flag(FlagSetting.Toolbar)) {
+                        Toolbar(open = state.toolsOpen, onToggle = { state.toolsOpen = !state.toolsOpen })
+                    }
                     if (state.toolsOpen) {
-                        ToolsPanel(actions = actions, height = BodyHeight)
+                        ToolsPanel(actions = actions, height = bodyHeight(state.settings, DefaultBodyRows))
                     } else Crossfade(
                         targetState = state.session.layerId,
                         animationSpec = tween(durationMillis = LayerFadeMs),
@@ -113,7 +126,7 @@ fun KeyboardScreen(
                     ) { layerId ->
                         val layer = state.layerOf(layerId)
                         if (layer.kind == LayerKind.EMOJI) {
-                            EmojiPanel(state, layer, actions, BodyHeight, keyCornerRadius)
+                            EmojiPanel(state, layer, actions, bodyHeight(state.settings, DefaultBodyRows), keyCornerRadius)
                             return@Crossfade
                         }
                         val showNumberRow = state.settings.numberRow && layer.numberRow &&
@@ -127,16 +140,16 @@ fun KeyboardScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(bodyHeight(rows.size, showNumberRow))
+                                .height(bodyHeight(state.settings, rows.size, showNumberRow))
                                 .padding(BodyPadding),
-                            verticalArrangement = Arrangement.spacedBy(RowGap),
+                            verticalArrangement = Arrangement.spacedBy(state.settings.int(IntSetting.RowGap).dp),
                         ) {
                             rows.forEachIndexed { index, row ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .weight(if (showNumberRow && index == 0) NumberRowWeight else 1f),
-                                    horizontalArrangement = Arrangement.spacedBy(KeyGap),
+                                    horizontalArrangement = Arrangement.spacedBy(state.settings.int(IntSetting.KeyGap).dp),
                                 ) {
                                     for (key in row) {
                                         KeyCell(key, layer, state, actions, keyCornerRadius)
@@ -262,14 +275,14 @@ private fun RowScope.KeyCell(
                 content = colors.onSurface,
                 cornerRadius = cornerRadius,
                 onTap = { actions.onChar(text) },
-                previewText = text,
+                previewText = text.takeIf { state.settings.flag(FlagSetting.KeyPreview) },
                 alternatives = key.alternatives(shifted),
                 onAlternativesChange = { state.alternates = it },
                 onAlternative = actions.onChar,
                 onPreviewShow = { state.preview = it },
                 onPreviewHide = { if (state.preview === it) state.preview = null },
             ) {
-                val hint = key.alternatives(shifted).firstOrNull()
+                val hint = key.alternatives(shifted).firstOrNull()?.takeIf { state.settings.flag(FlagSetting.Hints) }
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Text(text = text, style = MaterialTheme.typography.titleLarge)
                     if (hint != null) {
