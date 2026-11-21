@@ -49,6 +49,10 @@
     <string name="hints_body">Show the first long-press character in the key corner.</string>
     <string name="reset_title">Reset appearance</string>
     <string name="reset_body">Restore the default sizes, radius and toggles.</string>
+    <string name="edit_select_all">Select all</string>
+    <string name="edit_copy">Copy</string>
+    <string name="edit_cut">Cut</string>
+    <string name="edit_paste">Paste</string>
     <string name="key_radius_title">Key corner radius</string>
     <string name="key_radius_value">%1$d dp</string>
     <string name="layout_title">Layout</string>

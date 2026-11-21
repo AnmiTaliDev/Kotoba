@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,6 +64,7 @@ data class KeyboardActions(
     val onSpace: () -> Unit,
     val onMoveCursor: (Int) -> Unit,
     val onDeleteWords: (Int) -> Unit,
+    val onEditAction: (Int) -> Unit,
     val onLayer: (String) -> Unit,
     val onSwitchLanguage: () -> Unit,
     val onOpenSettings: () -> Unit,
@@ -117,7 +119,11 @@ fun KeyboardScreen(
                         .padding(bottom = navigationBarHeight),
                 ) {
                     if (state.settings.flag(FlagSetting.Toolbar)) {
-                        Toolbar(open = state.toolsOpen, onToggle = { state.toolsOpen = !state.toolsOpen })
+                        Toolbar(
+                            open = state.toolsOpen,
+                            onToggle = { state.toolsOpen = !state.toolsOpen },
+                            onEditAction = actions.onEditAction,
+                        )
                     }
                     if (state.toolsOpen) {
                         ToolsPanel(actions = actions, height = bodyHeight(state.settings, DefaultBodyRows))
@@ -169,7 +175,7 @@ fun KeyboardScreen(
 }
 
 @Composable
-private fun Toolbar(open: Boolean, onToggle: () -> Unit) {
+private fun Toolbar(open: Boolean, onToggle: () -> Unit, onEditAction: (Int) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,6 +193,22 @@ private fun Toolbar(open: Boolean, onToggle: () -> Unit) {
                 contentDescription = stringResource(if (open) R.string.tools_close else R.string.tools_open),
             )
         }
+        Spacer(Modifier.weight(1f))
+        EditButton(SelectAllIcon, R.string.edit_select_all) { onEditAction(android.R.id.selectAll) }
+        EditButton(CopyIcon, R.string.edit_copy) { onEditAction(android.R.id.copy) }
+        EditButton(CutIcon, R.string.edit_cut) { onEditAction(android.R.id.cut) }
+        EditButton(PasteIcon, R.string.edit_paste) { onEditAction(android.R.id.paste) }
+    }
+}
+
+@Composable
+private fun EditButton(icon: ImageVector, description: Int, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(ToolbarButtonSize)) {
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(description),
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

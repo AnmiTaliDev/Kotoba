@@ -73,6 +73,7 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
         onSpace = { dispatch(Event.Space) },
         onMoveCursor = ::moveCursor,
         onDeleteWords = ::deleteWords,
+        onEditAction = ::performEditAction,
         onLayer = { dispatch(Event.SwitchLayer(it)) },
         onSwitchLanguage = { dispatch(Event.SwitchLanguage) },
         onOpenSettings = ::openSettings,
@@ -87,6 +88,13 @@ class KotobaInputMethodService : InputMethodService(), LifecycleOwner, SavedStat
             connection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
         }
         connection.endBatchEdit()
+    }
+
+    private fun performEditAction(id: Int) {
+        val connection = currentInputConnection ?: return
+        connection.performContextMenuAction(id)
+        if (engine.needsTextAfterEdit()) engine.afterEdit(textBeforeCursor())
+        state.update(engine.state())
     }
 
     private fun deleteWords(steps: Int) {
